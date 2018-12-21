@@ -51,10 +51,10 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
 
     optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
     trainer = create_supervised_trainer(
-        model, optimizer, F.nll_loss, device=device)
+        model, optimizer, F.cross_entropy, device=device)
     evaluator = create_supervised_evaluator(model,
                                             metrics={'accuracy': Accuracy(),
-                                                     'nll': Loss(F.nll_loss)},
+                                                     'nll': Loss(F.cross_entropy)},
                                             device=device)
 
     @trainer.on(Events.ITERATION_COMPLETED)
