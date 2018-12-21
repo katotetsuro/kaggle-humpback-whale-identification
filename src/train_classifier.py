@@ -21,7 +21,7 @@ def get_data_loaders(train_batch_size):
         transforms.RandomGrayscale(p=0.2),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(20, resample=Image.BILINEAR),
-        transforms.CenterCrop((200, 800)),
+        transforms.RandomCrop((200, 800), pad_if_needed=True),
         transforms.ToTensor()
     ])
 
@@ -68,6 +68,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                   "".format(engine.state.epoch, iter, len(train_loader), engine.state.output))
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
+        lr_scheduler.step()
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
@@ -81,8 +82,6 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         writer.add_scalar("training/avg_accuracy",
                           avg_accuracy, engine.state.epoch)
         train_loader.dataset.rotate_new_whale()
-        lr_scheduler.step()
-        print('learning rate:{}'.format(optimizer.param_groups[0]['lr']))
 
     def score_function(engine):
         return evaluator.state.metrics['accuracy']
