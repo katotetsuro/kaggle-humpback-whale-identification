@@ -1,0 +1,6 @@
+.vscode
+.DS_Store
+tensorboard_logs
+notebooks/.ipynb_checkpoints
+notebooks/test.ipynb
+__pycache__
