@@ -57,6 +57,7 @@ class LabeledImageDataset(data.Dataset):
         self.new_whale_index += self.new_whale_size
         self.new_whale_index %= len(self.df_new_whale)
         self.df = df.reset_index(drop=True)
+        print('new_whaleを入れ替えます')
 
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
