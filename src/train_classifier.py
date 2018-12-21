@@ -9,6 +9,7 @@ from torchvision import transforms
 from tensorboardX import SummaryWriter
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
 from ignite.metrics import Accuracy, Loss
+from ignite.handlers import ModelCheckpoint
 
 from data_loader import LabeledImageDataset
 from model.gap_resnet import GapResnet
@@ -78,6 +79,20 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         writer.add_scalar("training/avg_accuracy",
                           avg_accuracy, engine.state.epoch)
         train_loader.dataset.rotate_new_whale()
+
+    def score_function(engine):
+        return evaluator.state.metrics['accuracy']
+
+    # Setup model checkpoint:
+    best_model_saver = ModelCheckpoint(log_dir,
+                                       filename_prefix="model",
+                                       score_name="train_acc",
+                                       score_function=score_function,
+                                       n_saved=3,
+                                       atomic=True,
+                                       create_dir=True)
+    evaluator.add_event_handler(
+        Events.COMPLETED, best_model_saver, {'gap_resnet': model})
 
     # @trainer.on(Events.EPOCH_COMPLETED)
     # def log_validation_results(engine):
