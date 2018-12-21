@@ -77,15 +77,16 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
-        evaluator.run(train_loader)
-        metrics = evaluator.state.metrics
-        avg_accuracy = metrics['accuracy']
-        avg_nll = metrics['nll']
-        print("Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
-              .format(engine.state.epoch, avg_accuracy, avg_nll))
-        writer.add_scalar("training/avg_loss", avg_nll, engine.state.epoch)
-        writer.add_scalar("training/avg_accuracy",
-                          avg_accuracy, engine.state.epoch)
+        if engine.state.epoch % 5 == 0:
+            evaluator.run(train_loader)
+            metrics = evaluator.state.metrics
+            avg_accuracy = metrics['accuracy']
+            avg_nll = metrics['nll']
+            print("Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
+                  .format(engine.state.epoch, avg_accuracy, avg_nll))
+            writer.add_scalar("training/avg_loss", avg_nll, engine.state.epoch)
+            writer.add_scalar("training/avg_accuracy",
+                              avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epch)
         train_loader.dataset.rotate_new_whale()
