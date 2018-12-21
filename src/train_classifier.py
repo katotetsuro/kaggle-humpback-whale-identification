@@ -51,6 +51,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         device = 'cuda'
 
     optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, epochs * len(train_loader.dataset)//train_batch_size)
     trainer = create_supervised_trainer(
         model, optimizer, F.cross_entropy, device=device)
     evaluator = create_supervised_evaluator(model,
@@ -79,6 +81,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         writer.add_scalar("training/avg_accuracy",
                           avg_accuracy, engine.state.epoch)
         train_loader.dataset.rotate_new_whale()
+        lr_scheduler.step()
+        print('learning rate:{}'.format(optimizer.param_groups[0]['lr']))
 
     def score_function(engine):
         return evaluator.state.metrics['accuracy']
