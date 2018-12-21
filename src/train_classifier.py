@@ -41,9 +41,14 @@ def create_summary_writer(model, data_loader, log_dir):
     return writer
 
 
-def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir):
+def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight):
     train_loader = get_data_loaders(train_batch_size)
-    model = GapResnet()
+    if weight == '':
+        model = GapResnet()
+    else:
+        print('loading initial weight from {}'.format(weight))
+        loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        model = torch.load(weight, map_location=loc)
     writer = create_summary_writer(model, train_loader, log_dir)
     device = 'cpu'
 
@@ -133,8 +138,10 @@ if __name__ == "__main__":
                         help='how many batches to wait before logging training status')
     parser.add_argument("--log_dir", type=str, default="tensorboard_logs",
                         help="log directory for Tensorboard log output")
+    parser.add_argument('--weight', type=str, default='',
+                        help='initial weight')
 
     args = parser.parse_args()
 
     run(args.batch_size, args.val_batch_size, args.epochs, args.lr, args.momentum,
-        args.log_interval, args.log_dir)
+        args.log_interval, args.log_dir, args.weight)
