@@ -89,7 +89,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             writer.add_scalar("training/avg_accuracy",
                               avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
-                          optimizer.param_groups[0]['lr'], engine.state.epch)
+                          optimizer.param_groups[0]['lr'], engine.state.epoch)
         train_loader.dataset.rotate_new_whale()
 
     def score_function(engine):
