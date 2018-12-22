@@ -21,7 +21,8 @@ def get_data_loaders(train_batch_size):
         transforms.RandomGrayscale(p=0.2),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(20, resample=Image.BILINEAR),
-        transforms.RandomCrop((200, 800), pad_if_needed=True),
+        transforms.Resize((224, 224)),
+        #        transforms.RandomCrop((200, 800), pad_if_needed=True),
         transforms.ToTensor()
     ])
 
