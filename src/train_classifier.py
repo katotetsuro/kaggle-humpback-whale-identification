@@ -20,9 +20,9 @@ def get_data_loaders(train_batch_size):
     train_data_transform = transforms.Compose([
         transforms.RandomGrayscale(p=0.2),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(20, resample=Image.BILINEAR),
+        transforms.RandomAffine(20,  scale=(0.8, 1.2),
+                                shear=0.2, resample=Image.BILINEAR),
         transforms.Resize((384, 384)),
-        #        transforms.RandomCrop((200, 800), pad_if_needed=True),
         transforms.ToTensor()
     ])
 
