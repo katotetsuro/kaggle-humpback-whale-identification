@@ -14,6 +14,7 @@ from ignite.engine.engine import Engine
 
 from triplet_dataset import TripletDataset
 from model.siamese import Siamese
+from metrics import TripletLoss
 
 
 def get_data_loaders(train_batch_size):
@@ -61,6 +62,37 @@ def create_triplet_trainer(model, optimizer, device=None):
     return Engine(_update)
 
 
+def create_triplet_evaluator(model,
+                             device=None):
+    if device:
+        model.to(device)
+
+    def _inference(engine, batch):
+        model.eval()
+        with torch.no_grad():
+            a, p, n = map(lambda x: convert_tensor(x, device), batch)
+            a, p, n = model(a, p, n)
+            return a, p, n
+
+    engine = Engine(_inference)
+
+    def identification_accuracy(anchor, positive, negative):
+        """
+        意味ある指標かわからんけども、anchor-positive間の距離がanchor-negative間の距離より近いことを確認する
+        """
+        p = torch.sum((anchor-positive)**2, dim=1)
+        n = torch.sum((anchor - negative)**2, dim=1)
+        pred = p < n
+        truth = torch.ones_like(pred)
+        return pred, truth
+
+    Accuracy(output_transform=identification_accuracy).attach(
+        engine, 'accuracy')
+    TripletLoss(F.triplet_margin_loss).attach(engine, 'loss')
+
+    return engine
+
+
 def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight):
     train_loader = get_data_loaders(train_batch_size)
     if weight == '':
@@ -78,22 +110,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, epochs * len(train_loader.dataset)//train_batch_size)
-    trainer = create_triplet_trainer(model, optimizer)
-
-    def identification_accuracy(anchor, positive, negative):
-        """
-        意味ある指標かわからんけども、anchor-positive間の距離がanchor-negative間の距離より近いことを確認する
-        """
-        p = torch.sum((anchor-positive)**2, dim=1)
-        n = torch.sum((anchor - negative)**2, dim=1)
-        pred = p < n
-        truth = torch.ones_like(pred)
-        return pred, truth
-
-    evaluator = create_supervised_evaluator(model,
-                                            metrics={'accuracy': Accuracy(output_transform=identification_accuracy),
-                                                     'nll': Loss(F.triplet_margin_loss)},
-                                            device=device)
+    trainer = create_triplet_trainer(model, optimizer, device=device)
+    evaluator = create_triplet_evaluator(model, device=device)
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_loss(engine):
@@ -111,10 +129,11 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             evaluator.run(train_loader)
             metrics = evaluator.state.metrics
             avg_accuracy = metrics['accuracy']
-            avg_nll = metrics['nll']
+            avg_loss = metrics['loss']
             print("Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
-                  .format(engine.state.epoch, avg_accuracy, avg_nll))
-            writer.add_scalar("training/avg_loss", avg_nll, engine.state.epoch)
+                  .format(engine.state.epoch, avg_accuracy, avg_loss))
+            writer.add_scalar("training/avg_loss",
+                              avg_loss, engine.state.epoch)
             writer.add_scalar("training/avg_accuracy",
                               avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
