@@ -65,7 +65,7 @@ class TripletDataset(data.Dataset):
         return anchor, positive, negative
 
     def __len__(self):
-        return len(self.df_without_new_whale)
+        return 32  # len(self.df_without_new_whale)
 
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'

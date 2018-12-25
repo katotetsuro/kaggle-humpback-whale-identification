@@ -11,10 +11,11 @@ from ignite.engine import Events, create_supervised_trainer, create_supervised_e
 from ignite.metrics import Accuracy, Loss
 from ignite.handlers import ModelCheckpoint
 from ignite.engine.engine import Engine
+from ignite._utils import convert_tensor
 
 from triplet_dataset import TripletDataset
 from model.siamese import Siamese
-from metrics import TripletLoss
+from metrics import TripletAccuracy, TripletLoss
 
 
 def get_data_loaders(train_batch_size):
@@ -49,7 +50,6 @@ def create_triplet_trainer(model, optimizer, device=None):
         model.to(device)
 
     def _update(engine, batch):
-        from ignite._utils import convert_tensor
         model.train()
         optimizer.zero_grad()
         a, p, n = map(lambda x: convert_tensor(x, device), batch)
@@ -76,18 +76,7 @@ def create_triplet_evaluator(model,
 
     engine = Engine(_inference)
 
-    def identification_accuracy(anchor, positive, negative):
-        """
-        意味ある指標かわからんけども、anchor-positive間の距離がanchor-negative間の距離より近いことを確認する
-        """
-        p = torch.sum((anchor-positive)**2, dim=1)
-        n = torch.sum((anchor - negative)**2, dim=1)
-        pred = p < n
-        truth = torch.ones_like(pred)
-        return pred, truth
-
-    Accuracy(output_transform=identification_accuracy).attach(
-        engine, 'accuracy')
+    TripletAccuracy().attach(engine, 'accuracy')
     TripletLoss(F.triplet_margin_loss).attach(engine, 'loss')
 
     return engine
@@ -125,7 +114,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
-        if engine.state.epoch % 5 == 0:
+        if engine.state.epoch % 3 == 0:
             evaluator.run(train_loader)
             metrics = evaluator.state.metrics
             avg_accuracy = metrics['accuracy']
@@ -138,7 +127,6 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                               avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
-        train_loader.dataset.rotate_new_whale()
 
     def score_function(engine):
         return evaluator.state.metrics['accuracy']
@@ -174,9 +162,9 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=64,
+    parser.add_argument('--batch-size', type=int, default=64,
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--val_batch_size', type=int, default=1000,
+    parser.add_argument('--val-batch-size', type=int, default=1000,
                         help='input batch size for validation (default: 1000)')
     parser.add_argument('--epochs', type=int, default=10,
                         help='number of epochs to train (default: 10)')
@@ -184,9 +172,9 @@ if __name__ == "__main__":
                         help='learning rate (default: 0.01)')
     parser.add_argument('--momentum', type=float, default=0.9,
                         help='SGD momentum (default: 0.9)')
-    parser.add_argument('--log_interval', type=int, default=10,
+    parser.add_argument('--log-interval', type=int, default=10,
                         help='how many batches to wait before logging training status')
-    parser.add_argument("--log_dir", type=str, default="tensorboard_logs",
+    parser.add_argument("--log-dir", type=str, default="tensorboard_logs",
                         help="log directory for Tensorboard log output")
     parser.add_argument('--weight', type=str, default='',
                         help='initial weight')
