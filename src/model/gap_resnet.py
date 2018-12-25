@@ -9,10 +9,12 @@ class GapResnet(nn.Module):
         self.extractor = nn.Sequential(*list(resnet.children())[:8])
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
         self.head = nn.Linear(512, n_class)
+        self.dropout = nn.Dropout()
 
     def forward(self, x):
         h = self.extractor(x)
         h = self.gap(h)
         h = self.head(h[:, :, 0, 0])
+        h = self.dropout(h)
 
         return h
