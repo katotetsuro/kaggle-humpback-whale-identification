@@ -18,7 +18,7 @@ from model.siamese import Siamese
 from metrics import TripletAccuracy, TripletLoss
 
 
-def get_data_loaders(train_batch_size):
+def get_data_loaders(train_batch_size, prob):
 
     train_data_transform = transforms.Compose([
         transforms.RandomGrayscale(p=0.2),
@@ -29,7 +29,7 @@ def get_data_loaders(train_batch_size):
         transforms.ToTensor()
     ])
 
-    train_loader = DataLoader(TripletDataset('data', transform=train_data_transform),
+    train_loader = DataLoader(TripletDataset('data', transform=train_data_transform, new_whale_prob=prob),
                               batch_size=train_batch_size, shuffle=True)
     return train_loader
 
@@ -82,8 +82,8 @@ def create_triplet_evaluator(model,
     return engine
 
 
-def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight):
-    train_loader = get_data_loaders(train_batch_size)
+def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, prob):
+    train_loader = get_data_loaders(train_batch_size, prob)
     if weight == '':
         model = Siamese()
     else:
@@ -178,8 +178,10 @@ if __name__ == "__main__":
                         help="log directory for Tensorboard log output")
     parser.add_argument('--weight', type=str, default='',
                         help='initial weight')
+    parser.add_argument('--prob', type=float, default=0.1,
+                        help='new whaleからデータをサンプリングする確率')
 
     args = parser.parse_args()
 
     run(args.batch_size, args.val_batch_size, args.epochs, args.lr, args.momentum,
-        args.log_interval, args.log_dir, args.weight)
+        args.log_interval, args.log_dir, args.weight, args.prob)
