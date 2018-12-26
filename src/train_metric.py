@@ -45,7 +45,7 @@ def create_summary_writer(model, data_loader, log_dir):
     return writer
 
 
-def create_triplet_trainer(model, optimizer, device=None):
+def create_triplet_trainer(model, optimizer, device=None, loss_fn=F.triplet_margin_loss):
     if device:
         model.to(device)
 
@@ -54,7 +54,7 @@ def create_triplet_trainer(model, optimizer, device=None):
         optimizer.zero_grad()
         a, p, n = map(lambda x: convert_tensor(x, device), batch)
         a, p, n = model(a, p, n)
-        loss = F.triplet_margin_loss(a, p, n)
+        loss = loss_fn(a, p, n)
         loss.backward()
         optimizer.step()
         return loss.item()
@@ -62,8 +62,7 @@ def create_triplet_trainer(model, optimizer, device=None):
     return Engine(_update)
 
 
-def create_triplet_evaluator(model,
-                             device=None):
+def create_triplet_evaluator(model, device=None, loss_fn=F.triplet_margin_loss):
     if device:
         model.to(device)
 
@@ -77,12 +76,12 @@ def create_triplet_evaluator(model,
     engine = Engine(_inference)
 
     TripletAccuracy().attach(engine, 'accuracy')
-    TripletLoss(F.triplet_margin_loss).attach(engine, 'loss')
+    TripletLoss(loss_fn).attach(engine, 'loss')
 
     return engine
 
 
-def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, prob):
+def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, prob, args):
     train_loader = get_data_loaders(train_batch_size, prob)
     if weight == '':
         model = Siamese()
@@ -99,8 +98,11 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, epochs * len(train_loader.dataset)//train_batch_size)
-    trainer = create_triplet_trainer(model, optimizer, device=device)
-    evaluator = create_triplet_evaluator(model, device=device)
+
+    loss_fn = torch.nn.TripletMarginLoss(margin=args.margin)
+    trainer = create_triplet_trainer(
+        model, optimizer, device=device, loss_fn=loss_fn)
+    evaluator = create_triplet_evaluator(model, device=device, loss_fn=loss_fn)
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_loss(engine):
@@ -180,8 +182,10 @@ if __name__ == "__main__":
                         help='initial weight')
     parser.add_argument('--prob', type=float, default=0.1,
                         help='new whaleからデータをサンプリングする確率')
+    parser.add_argument('--margin', type=float, default=0.1,
+                        help='triplet lossのmarginパラメータ')
 
     args = parser.parse_args()
 
     run(args.batch_size, args.val_batch_size, args.epochs, args.lr, args.momentum,
-        args.log_interval, args.log_dir, args.weight, args.prob)
+        args.log_interval, args.log_dir, args.weight, args.prob, args)

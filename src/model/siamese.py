@@ -18,7 +18,7 @@ class FeatureExtractor(nn.Module):
 class Siamese(nn.Module):
     def __init__(self):
         super().__init__()
-        self.net = FeatureExtractor()
+        self.net = FeatureExtractor(activation=None)
 
     def forward(self, anchor, positive, negative):
         a = self.net(anchor)
