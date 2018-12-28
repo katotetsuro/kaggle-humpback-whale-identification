@@ -1,17 +1,20 @@
 from .gap_resnet import GapResnet
 import torch.nn as nn
+import torch
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self, feature_dim=128, activation=nn.Sigmoid()):
+    def __init__(self, feature_dim=500):
         super().__init__()
         self.net = GapResnet(n_class=feature_dim)
-        self.activation = activation
+        self.fc = nn.Linear(500, 10)
 
     def forward(self, x):
         h = self.net(x)
-        if self.activation:
-            h = self.activation(h)
+        h = self.fc(h)
+        l = (h**2).sum(dim=1).sqrt().reshape(-1, 1)
+        h /= l
+
         return h
 
 

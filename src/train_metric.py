@@ -5,7 +5,6 @@ from torch import nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from torch.optim import SGD
-from torchvision import transforms
 from tensorboardX import SummaryWriter
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
 from ignite.metrics import Accuracy, Loss
@@ -16,19 +15,12 @@ from ignite._utils import convert_tensor
 from triplet_dataset import TripletDataset
 from model.siamese import Siamese
 from metrics import TripletAccuracy, TripletLoss
+from transforms import get_transform
 
 
 def get_data_loaders(train_batch_size, prob):
 
-    train_data_transform = transforms.Compose([
-        transforms.RandomGrayscale(p=0.2),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomAffine(10,  scale=(0.8, 1.2),
-                                shear=0.2, resample=Image.BILINEAR),
-        transforms.Resize((384, 384)),
-        transforms.ToTensor()
-    ])
-
+    train_data_transform = get_transform()
     train_loader = DataLoader(TripletDataset('data', transform=train_data_transform, new_whale_prob=prob),
                               batch_size=train_batch_size, shuffle=True)
     return train_loader
@@ -45,7 +37,7 @@ def create_summary_writer(model, data_loader, log_dir):
     return writer
 
 
-def create_triplet_trainer(model, optimizer, device=None, loss_fn=F.triplet_margin_loss):
+def create_triplet_trainer(model, optimizer, loss_fn, device=None):
     if device:
         model.to(device)
 
@@ -62,7 +54,7 @@ def create_triplet_trainer(model, optimizer, device=None, loss_fn=F.triplet_marg
     return Engine(_update)
 
 
-def create_triplet_evaluator(model, device=None, loss_fn=F.triplet_margin_loss):
+def create_triplet_evaluator(model, loss_fn, device=None):
     if device:
         model.to(device)
 
@@ -182,7 +174,7 @@ if __name__ == "__main__":
                         help='initial weight')
     parser.add_argument('--prob', type=float, default=0.1,
                         help='new whaleからデータをサンプリングする確率')
-    parser.add_argument('--margin', type=float, default=0.1,
+    parser.add_argument('--margin', type=float, default=1.0,
                         help='triplet lossのmarginパラメータ')
 
     args = parser.parse_args()
