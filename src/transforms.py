@@ -1,4 +1,6 @@
 from torchvision import transforms
+from PIL import Image
+
 
 """
 jupyter notebookとtrainスクリプトの両方でで同じtransformにしたいので、

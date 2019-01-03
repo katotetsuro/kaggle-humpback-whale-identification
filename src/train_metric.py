@@ -12,17 +12,19 @@ from ignite.handlers import ModelCheckpoint
 from ignite.engine.engine import Engine
 from ignite._utils import convert_tensor
 
-from triplet_dataset import TripletDataset
-from model.siamese import Siamese
-from metrics import TripletAccuracy, TripletLoss
+from loss.triplet_loss import TripletLoss
+from model.siamese import FeatureExtractor
+from online_mining_dataset import OnlineMiningDataset
+from model.debug_model import DebugModel
+#from metrics import TripletAccuracy, TripletLoss
 from transforms import get_transform
 
 
 def get_data_loaders(train_batch_size, prob):
 
     train_data_transform = get_transform()
-    train_loader = DataLoader(TripletDataset('data', transform=train_data_transform, new_whale_prob=prob),
-                              batch_size=train_batch_size, shuffle=True)
+    train_loader = DataLoader(OnlineMiningDataset('data', transform=train_data_transform),
+                              batch_size=train_batch_size, shuffle=False)
     return train_loader
 
 
@@ -76,7 +78,7 @@ def create_triplet_evaluator(model, loss_fn, device=None):
 def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, prob, args):
     train_loader = get_data_loaders(train_batch_size, prob)
     if weight == '':
-        model = Siamese()
+        model = Siamese() if not args.debug_model else DebugModel()
     else:
         print('loading initial weight from {}'.format(weight))
         loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -91,10 +93,12 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, epochs * len(train_loader.dataset)//train_batch_size)
 
-    loss_fn = torch.nn.TripletMarginLoss(margin=args.margin)
-    trainer = create_triplet_trainer(
-        model, optimizer, device=device, loss_fn=loss_fn)
-    evaluator = create_triplet_evaluator(model, device=device, loss_fn=loss_fn)
+    loss_fn = TripletLoss(margin=args.margin)
+    trainer = create_supervised_trainer(
+        model, optimizer, loss_fn, device=device)
+    evaluator = create_supervised_evaluator(model,
+                                            metrics={'loss': Loss(loss_fn)},
+                                            device=device)
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_loss(engine):
@@ -111,19 +115,22 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         if engine.state.epoch % 3 == 0:
             evaluator.run(train_loader)
             metrics = evaluator.state.metrics
-            avg_accuracy = metrics['accuracy']
+            #vg_accuracy = metrics['accuracy']
             avg_loss = metrics['loss']
-            print("Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
-                  .format(engine.state.epoch, avg_accuracy, avg_loss))
+            # print("Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
+            #       .format(engine.state.epoch, avg_accuracy, avg_loss))
+            print("Training Results - Epoch: {}  Avg loss: {:.2f}"
+                  .format(engine.state.epoch, avg_loss))
             writer.add_scalar("training/avg_loss",
                               avg_loss, engine.state.epoch)
-            writer.add_scalar("training/avg_accuracy",
-                              avg_accuracy, engine.state.epoch)
+            # writer.add_scalar("training/avg_accuracy",
+            #                   avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
+        train_loader.dataset.sample()
 
     def score_function(engine):
-        return evaluator.state.metrics['accuracy']
+        return -evaluator.state.metrics['loss']
 
     # Setup model checkpoint:
     best_model_saver = ModelCheckpoint(log_dir,
@@ -176,6 +183,8 @@ if __name__ == "__main__":
                         help='new whaleからデータをサンプリングする確率')
     parser.add_argument('--margin', type=float, default=1.0,
                         help='triplet lossのmarginパラメータ')
+    parser.add_argument('--debug-model', action='store_true',
+                        help='cpuで挙動確認するようのめちゃ単純なモデルを使う')
 
     args = parser.parse_args()
 
