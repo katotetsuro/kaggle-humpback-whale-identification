@@ -78,7 +78,8 @@ def create_triplet_evaluator(model, loss_fn, device=None):
 def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, prob, args):
     train_loader = get_data_loaders(train_batch_size, prob)
     if weight == '':
-        model = Siamese() if not args.debug_model else DebugModel()
+        model = FeatureExtractor(
+            feature_dim=8) if not args.debug_model else DebugModel()
     else:
         print('loading initial weight from {}'.format(weight))
         loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'

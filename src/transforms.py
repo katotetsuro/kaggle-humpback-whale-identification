@@ -14,7 +14,7 @@ def get_transform():
         transforms.RandomHorizontalFlip(),
         transforms.RandomAffine(10,  scale=(0.8, 1.2),
                                 shear=0.2, resample=Image.BILINEAR),
-        transforms.Resize((64, 64)),
+        transforms.Resize((128, 128)),
         transforms.ToTensor()
     ])
     return data_transform
