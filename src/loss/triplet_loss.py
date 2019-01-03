@@ -27,7 +27,8 @@ class TripletLoss(nn.Module):
         Returns:
             mask: tf.bool `Tensor` with shape [batch_size, batch_size]
         """
-        indices_equal = torch.eye(len(labels)).type(torch.ByteTensor)
+        indices_equal = torch.eye(
+            len(labels), device=labels.device).type(torch.ByteTensor)
         indices_not_equal = 1 - indices_equal
         labels_equal = labels[None] == labels[:, None]
         mask = indices_not_equal * labels_equal
@@ -56,8 +57,6 @@ class TripletLoss(nn.Module):
         # First, we need to get a mask for every valid positive (they should have same label)
         mask_anchor_positive = self._get_anchor_positive_triplet_mask(
             labels).float()
-        if embeddings.is_cuda:
-            mask_anchor_positive.cuda()
 
         # We put to 0 any element where (a, p) is not valid (valid if a != p and label(a) == label(p))
         anchor_positive_dist = mask_anchor_positive * pairwise_dist
@@ -71,8 +70,6 @@ class TripletLoss(nn.Module):
         # First, we need to get a mask for every valid negative (they should have different labels)
         mask_anchor_negative = self._get_anchor_negative_triplet_mask(
             labels).float()
-        if embeddings.is_cuda:
-            mask_anchor_negative.cuda()
 
         # We add the maximum value in each row to the invalid negatives (label(a) == label(n))
         max_anchor_negative_dist, _ = pairwise_dist.max(dim=1)
