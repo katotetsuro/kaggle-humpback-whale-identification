@@ -79,7 +79,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     train_loader = get_data_loaders(train_batch_size, prob)
     if weight == '':
         model = FeatureExtractor(
-            feature_dim=8) if not args.debug_model else DebugModel()
+            feature_dim=100) if not args.debug_model else DebugModel()
     else:
         print('loading initial weight from {}'.format(weight))
         loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'
