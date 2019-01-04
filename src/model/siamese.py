@@ -13,7 +13,7 @@ class FeatureExtractor(nn.Module):
         h = self.net(x)
         h = self.fc(h)
         l = (h**2).sum(dim=1).sqrt().reshape(-1, 1)
-        h /= l
+        h = h / l
 
         return h
 
