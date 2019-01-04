@@ -28,7 +28,7 @@ class TripletLoss(nn.Module):
             mask: tf.bool `Tensor` with shape [batch_size, batch_size]
         """
         indices_equal = torch.eye(
-            len(labels), device=labels.device).type(torch.ByteTensor)
+            len(labels)).type(torch.ByteTensor).to(labels.device)
         indices_not_equal = 1 - indices_equal
         labels_equal = labels[None] == labels[:, None]
         mask = indices_not_equal * labels_equal
