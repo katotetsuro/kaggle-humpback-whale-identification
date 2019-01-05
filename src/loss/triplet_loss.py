@@ -18,6 +18,14 @@ class TripletLoss(nn.Module):
             1, -1) - 2.0 * dot_product + square_norm.reshape(-1, 1)
         distances = torch.max(distances, torch.zeros_like(distances))
 
+        # Because the gradient of sqrt is infinite when distances == 0.0 (ex: on the diagonal)
+        # we need to add a small epsilon where distances == 0.0
+        mask = (distances == 0.0).float()
+        distances = distances + mask * 1e-16
+        distances = torch.sqrt(distances)
+        # Correct the epsilon added: set the distances on the mask to be exactly 0.0
+        distances = distances * (1.0 - mask)
+
         return distances
 
     def _get_anchor_positive_triplet_mask(self, labels):
@@ -85,5 +93,7 @@ class TripletLoss(nn.Module):
         triplet_loss = torch.max(
             hardest_positive_dist - hardest_negative_dist + self.margin, torch.zeros_like(hardest_positive_dist))
 
+        #import pdb
+        # pdb.set_trace()
         # Get final mean triplet loss
         return triplet_loss.mean()
