@@ -95,5 +95,9 @@ class TripletLoss(nn.Module):
 
         #import pdb
         # pdb.set_trace()
+        if pairwise_dist.max() < 0.01:
+            print('collapse!')
+            import pdb
+            pdb.set_trace()
         # Get final mean triplet loss
         return triplet_loss.mean()

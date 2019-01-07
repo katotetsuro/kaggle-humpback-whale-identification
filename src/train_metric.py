@@ -193,6 +193,7 @@ if __name__ == "__main__":
                         help='weight decay')
 
     args = parser.parse_args()
+    print(args)
 
     run(args.batch_size, args.val_batch_size, args.epochs, args.lr, args.momentum,
         args.log_interval, args.log_dir, args.weight, args.prob, args)
