@@ -23,7 +23,7 @@ from transforms import get_transform
 def get_data_loaders(train_batch_size, prob):
 
     train_data_transform = get_transform()
-    train_loader = DataLoader(OnlineMiningDataset('data', transform=train_data_transform),
+    train_loader = DataLoader(OnlineMiningDataset('data', transform=train_data_transform, min_size=args.min_size_per_class),
                               batch_size=train_batch_size, shuffle=False)
     return train_loader
 
@@ -90,7 +90,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     if torch.cuda.is_available():
         device = 'cuda'
 
-    optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
+    optimizer = SGD(model.parameters(), lr=lr, momentum=momentum,
+                    weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, epochs * len(train_loader.dataset)//train_batch_size)
 
@@ -186,6 +187,10 @@ if __name__ == "__main__":
                         help='triplet lossのmarginパラメータ')
     parser.add_argument('--debug-model', action='store_true',
                         help='cpuで挙動確認するようのめちゃ単純なモデルを使う')
+    parser.add_argument('--min-size-per-class', type=int, default=1,
+                        help='最低min-size-per-class枚以上あるクラスだけを使う')
+    parser.add_argument('--weight-decay', type=float, default=0.005,
+                        help='weight decay')
 
     args = parser.parse_args()
 

@@ -19,16 +19,20 @@ class OnlineMiningDataset(data.Dataset):
     train_with_id.csvの作り方はnotebooks/split_dataset.ipynbを参照
     """
 
-    def __init__(self, data_dir, transform=None, image_per_class=4, limit=None):
+    def __init__(self, data_dir, transform=None, image_per_class=4, limit=None, min_size=1):
         df = pd.read_csv(join(data_dir, 'train_with_id.csv'))
         self.image_dir = join(data_dir, 'train')
 
-        # 2枚以上の画像がある個体に絞る
+        # min_size枚以上の画像がある個体に絞る
         self.df_without_new_whale = df[df.label > 0]
         _, self.counts = np.unique(
             df.label, return_counts=True)
-#        self.df_without_new_whale = self.df_without_new_whale[
-#            self.counts[self.df_without_new_whale.label] > 1]
+        self.df_without_new_whale = self.df_without_new_whale[
+            self.counts[self.df_without_new_whale.label] >= min_size]
+        self.df_without_new_whale = self.df_without_new_whale.reset_index(
+            drop=True)
+        print('最低{}枚はサンプルがあるクラスだけを使う。対象クラス数:{}'.format(
+            min_size, len(self.df_without_new_whale)))
         self.df_new_whale = df[df.label == 0]
 
         if transform:
@@ -64,7 +68,8 @@ class OnlineMiningDataset(data.Dataset):
 
     def sample(self):
         dfs = []
-        labels = [l+1 for l in range(len(self.counts)-1)]
+#        labels = [l+1 for l in range(len(self.counts)-1)]
+        labels = np.asarray(self.df_without_new_whale.label)
         random.shuffle(labels)
 
         for l in labels:
