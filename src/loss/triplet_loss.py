@@ -59,24 +59,7 @@ class TripletLoss(nn.Module):
         return mask
 
     def forward(self, embeddings, labels):
-        try:
-            sh = self.batch_semi_hard(embeddings, labels)
-            h = self.batch_hard(embeddings, labels)
-            print(sh, h)
-            return sh
-        except ValueError as e:
-            print(e)
-        h = self.batch_hard(embeddings, labels)
-        print(h)
-        return h
-        # return self.batch_hard(embeddings, labels)
-        # if self.semi_hard:
-        #     try:
-        #         return self.batch_semi_hard(embeddings, labels)
-        #     except ValueError as e:
-        #         print(e)
-
-        # return self.batch_hard(embeddings, labels)
+        return self.batch_hard(embeddings, labels)
 
     def batch_hard(self, embeddings, labels):
         # Get the pairwise distance matrix
@@ -122,34 +105,3 @@ class TripletLoss(nn.Module):
             pdb.set_trace()
         # Get final mean triplet loss
         return triplet_loss.mean()
-
-    def batch_semi_hard(self, embeddings, labels):
-            # Get the pairwise distance matrix
-        pairwise_dist = self._pairwise_distances(embeddings)
-        mask_anchor_positive = self._get_anchor_positive_triplet_mask(
-            labels).float()
-        anchor_positive_dist = mask_anchor_positive * pairwise_dist
-
-        mask_anchor_negative = self._get_anchor_negative_triplet_mask(
-            labels).float()
-
-        anchor_negative_dist = mask_anchor_negative * pairwise_dist
-
-        l = len(embeddings)
-        count = 0
-        loss = torch.tensor(0.0, device=embeddings.device)
-        for y0 in range(l):
-            for x0 in range(l):
-                for y1 in range(l):
-                    for x1 in range(l):
-                        p = anchor_positive_dist[y0, x0]
-                        n = anchor_negative_dist[y1, x1]
-                        if n < p and p + self.margin < n:
-                            count += 1
-                            loss = loss + torch.max(0.0, p-n+self.margin)
-        if count == 0:
-            raise ValueError('semi hardなサンプルがありません')
-        average_loss = loss / count
-        import pdb
-        pdb.set_trace()
-        return average_loss
