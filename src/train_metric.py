@@ -110,7 +110,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                   "".format(engine.state.epoch, iter, len(train_loader), engine.state.output))
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
-        lr_scheduler.step()
+        # lr_scheduler.step()
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):

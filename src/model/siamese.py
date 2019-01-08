@@ -12,8 +12,8 @@ class FeatureExtractor(nn.Module):
     def forward(self, x):
         h = self.net(x)
         h = self.fc(h)
-#        l = (h**2).sum(dim=1).sqrt().reshape(-1, 1)
-#        h = h / l
+        l = (h**2).sum(dim=1).sqrt().reshape(-1, 1)
+        h = h / l
 
         return h
 
