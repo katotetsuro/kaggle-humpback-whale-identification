@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 from tensorboardX import SummaryWriter
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
 from ignite.metrics import Accuracy, Loss
@@ -98,10 +98,14 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     if torch.cuda.is_available():
         device = 'cuda'
 
-    optimizer = SGD(model.parameters(), lr=lr, momentum=momentum,
-                    weight_decay=args.weight_decay)
-    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, epochs * len(train_loader.dataset)//train_batch_size)
+    if args.optimizer == 'sgd':
+        optimizer = SGD(model.parameters(), lr=lr, momentum=momentum,
+                        weight_decay=args.weight_decay)
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, epochs * len(train_loader.dataset)//train_batch_size)
+    else:
+        optimizer = Adam(model.parameters(), lr=lr,
+                         weight_decay=args.weight_decay)
 
     loss_fn = TripletLoss(margin=args.margin)
     trainer = create_supervised_trainer(
@@ -118,7 +122,9 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                   "".format(engine.state.epoch, iter, len(train_loader), engine.state.output))
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
-        # lr_scheduler.step()
+        if args.optimizer == 'sgd':
+            # lr_scheduler.step()
+            pass
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
@@ -137,7 +143,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             #                   avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
-        train_loader.dataset.sample()
+        if args.dataset == 'whale':
+            train_loader.dataset.sample()
 
     def score_function(engine):
         return -evaluator.state.metrics['loss']
@@ -201,6 +208,7 @@ if __name__ == "__main__":
                         help='weight decay')
     parser.add_argument(
         '--dataset', choices=['whale', 'mnist'], default='whale')
+    parser.add_argument('--optimizer', choices=['sgd', 'adam'], default='sgd')
 
     args = parser.parse_args()
     print(args)
