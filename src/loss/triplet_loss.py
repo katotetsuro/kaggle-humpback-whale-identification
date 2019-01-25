@@ -104,4 +104,7 @@ class TripletLoss(nn.Module):
             import pdb
             pdb.set_trace()
         # Get final mean triplet loss
-        return triplet_loss.mean()
+        average_loss = triplet_loss.mean()
+        active_triplet_percent = len(
+            triplet_loss.nonzero()) / len(triplet_loss)
+        return average_loss

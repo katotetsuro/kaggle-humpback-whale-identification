@@ -31,7 +31,7 @@ class OnlineMiningDataset(data.Dataset):
             self.counts[self.df_without_new_whale.label] >= min_size]
         self.df_without_new_whale = self.df_without_new_whale.reset_index(
             drop=True)
-        print('最低{}枚はサンプルがあるクラスだけを使う。対象クラス数:{}'.format(
+        print('最低{}枚はサンプルがあるクラスだけを使う。対象サンプル数:{}'.format(
             min_size, len(self.df_without_new_whale)))
         self.df_new_whale = df[df.label == 0]
 

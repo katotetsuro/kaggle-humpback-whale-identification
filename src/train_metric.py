@@ -18,13 +18,21 @@ from online_mining_dataset import OnlineMiningDataset
 from model.debug_model import DebugModel
 #from metrics import TripletAccuracy, TripletLoss
 from transforms import get_transform
+from torchvision.datasets import MNIST
 
 
 def get_data_loaders(train_batch_size, prob):
 
     train_data_transform = get_transform()
-    train_loader = DataLoader(OnlineMiningDataset('data', transform=train_data_transform, min_size=args.min_size_per_class),
-                              batch_size=train_batch_size, shuffle=False)
+    if args.dataset == 'whale':
+        train_loader = DataLoader(OnlineMiningDataset('data', transform=train_data_transform, min_size=args.min_size_per_class),
+                                  batch_size=train_batch_size, shuffle=False)
+    elif args.dataset == 'mnist':
+        print('mnistで試します')
+        data = MNIST('~/.pytorch/mnist', download=True,
+                     transform=train_data_transform)
+        train_loader = DataLoader(
+            data, batch_size=train_batch_size, shuffle=True)
     return train_loader
 
 
@@ -191,6 +199,8 @@ if __name__ == "__main__":
                         help='最低min-size-per-class枚以上あるクラスだけを使う')
     parser.add_argument('--weight-decay', type=float, default=0.005,
                         help='weight decay')
+    parser.add_argument(
+        '--dataset', choices=['whale', 'mnist'], default='whale')
 
     args = parser.parse_args()
     print(args)

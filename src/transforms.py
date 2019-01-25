@@ -10,7 +10,7 @@ jupyter notebookとtrainスクリプトの両方でで同じtransformにした�
 
 def get_transform():
     data_transform = transforms.Compose([
-        transforms.RandomGrayscale(p=0.2),
+        transforms.Grayscale(num_output_channels=3),
         transforms.RandomHorizontalFlip(),
         transforms.RandomAffine(10,  scale=(0.8, 1.2),
                                 shear=0.2, resample=Image.BILINEAR),
