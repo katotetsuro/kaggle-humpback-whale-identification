@@ -123,7 +123,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
         if args.optimizer == 'sgd':
-            # lr_scheduler.step()
+            lr_scheduler.step()
             pass
 
     @trainer.on(Events.EPOCH_COMPLETED)
