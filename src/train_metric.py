@@ -143,8 +143,9 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             #                   avg_accuracy, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
-        if args.dataset == 'whale':
+        if args.dataset == 'whale' and engine.state.epoch % 5 == 0:
             train_loader.dataset.sample()
+            loss_fn.increase_difficulty(0.01)
 
     def score_function(engine):
         return -evaluator.state.metrics['loss']

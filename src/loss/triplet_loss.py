@@ -11,6 +11,7 @@ class TripletLoss(nn.Module):
         super().__init__()
         self.margin = margin
         self.semi_hard = True
+        self.difficulty = 0.5
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -62,6 +63,7 @@ class TripletLoss(nn.Module):
         return self.batch_hard(embeddings, labels)
 
     def batch_hard(self, embeddings, labels):
+        order = round(len(embeddings) * self.difficulty)
         # Get the pairwise distance matrix
         pairwise_dist = self._pairwise_distances(embeddings)
 
@@ -74,7 +76,7 @@ class TripletLoss(nn.Module):
         anchor_positive_dist = mask_anchor_positive * pairwise_dist
 
         # shape (batch_size, 1)
-        hardest_positive_dist, _ = anchor_positive_dist.max(dim=1)
+        hardest_positive_dist = anchor_positive_dist.sort(dim=1)[0][:, order]
         # tf.summary.scalar("hardest_positive_dist",
         #                   tf.reduce_mean(hardest_positive_dist))
 
@@ -89,7 +91,7 @@ class TripletLoss(nn.Module):
             max_anchor_negative_dist * (1.0 - mask_anchor_negative)
 
         # shape (batch_size,)
-        hardest_negative_dist, _ = anchor_negative_dist.min(dim=1)
+        hardest_negative_dist = anchor_negative_dist.sort(dim=1)[0][:, -order]
         # tf.summary.scalar("hardest_negative_dist",
         #                   tf.reduce_mean(hardest_negative_dist))
 
@@ -108,3 +110,8 @@ class TripletLoss(nn.Module):
         active_triplet_percent = len(
             triplet_loss.nonzero()) / len(triplet_loss)
         return average_loss
+
+    def increase_difficulty(self, step=0.1):
+        self.difficulty += step
+        self.difficulty = min(1, self.difficulty)
+        print('new difficulty:{}'.format(self.difficulty))
