@@ -11,7 +11,8 @@ class TripletLoss(nn.Module):
         super().__init__()
         self.margin = margin
         self.semi_hard = True
-        self.difficulty = 0.5
+        self.difficulty = 0.85
+        self.max_difficulty = 0.98
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -63,7 +64,7 @@ class TripletLoss(nn.Module):
         return self.batch_hard(embeddings, labels)
 
     def batch_hard(self, embeddings, labels):
-        order = round(len(embeddings) * self.difficulty)
+        order = round(len(embeddings) * self.difficulty) - 1
         # Get the pairwise distance matrix
         pairwise_dist = self._pairwise_distances(embeddings)
 
@@ -101,7 +102,7 @@ class TripletLoss(nn.Module):
 
         #import pdb
         # pdb.set_trace()
-        if pairwise_dist.max() < 0.02:
+        if pairwise_dist.mean() < 0.02:
             print('collapse!')
             import pdb
             pdb.set_trace()
@@ -113,5 +114,5 @@ class TripletLoss(nn.Module):
 
     def increase_difficulty(self, step=0.1):
         self.difficulty += step
-        self.difficulty = min(1, self.difficulty)
+        self.difficulty = min(self.max_difficulty, self.difficulty)
         print('new difficulty:{}'.format(self.difficulty))
