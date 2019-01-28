@@ -13,6 +13,7 @@ class TripletLoss(nn.Module):
         self.semi_hard = True
         self.difficulty = 0.85
         self.max_difficulty = 0.98
+        self.iteration = 0
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -100,8 +101,6 @@ class TripletLoss(nn.Module):
         triplet_loss = torch.max(
             hardest_positive_dist - hardest_negative_dist + self.margin, torch.zeros_like(hardest_positive_dist))
 
-        #import pdb
-        # pdb.set_trace()
         if pairwise_dist.mean() < 0.02:
             print('collapse!')
             import pdb
@@ -110,6 +109,11 @@ class TripletLoss(nn.Module):
         average_loss = triplet_loss.mean()
         active_triplet_percent = len(
             triplet_loss.nonzero()) / len(triplet_loss)
+
+        self.iteration += 1
+        if self.iteration % 100 == 0:
+            print('active triplet percentage:{}'.format(active_triplet_percent))
+
         return average_loss
 
     def increase_difficulty(self, step=0.1):
