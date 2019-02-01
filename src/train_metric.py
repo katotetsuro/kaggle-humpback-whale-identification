@@ -145,7 +145,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
         if args.dataset == 'whale' and engine.state.epoch % 5 == 0:
             train_loader.dataset.sample()
-            loss_fn.increase_difficulty(0.005)
+            # loss_fn.increase_difficulty(0.005)
+            pass
 
     def score_function(engine):
         return -evaluator.state.metrics['loss']
@@ -157,7 +158,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                                        score_function=score_function,
                                        n_saved=3,
                                        atomic=True,
-                                       create_dir=True)
+                                       create_dir=True,
+                                       require_empty=False)
     evaluator.add_event_handler(
         Events.COMPLETED, best_model_saver, {'metric_model': model})
 

@@ -69,13 +69,14 @@ class OnlineMiningDataset(data.Dataset):
     def sample(self):
         dfs = []
 #        labels = [l+1 for l in range(len(self.counts)-1)]
-        labels = np.asarray(self.df_without_new_whale.label)
+        labels = np.unique(self.df_without_new_whale.label)
         random.shuffle(labels)
 
-        for l in labels:
-            d = self.df_without_new_whale[self.df_without_new_whale.label == l]
-            replace = len(d) < self.image_per_class
-            dfs.append(d.sample(self.image_per_class, replace=replace))
+        for _ in range(2000//len(labels)):
+            for l in labels:
+                d = self.df_without_new_whale[self.df_without_new_whale.label == l]
+                replace = len(d) < self.image_per_class
+                dfs.append(d.sample(self.image_per_class, replace=replace))
 
         df = pd.concat(dfs)
         self.df = df.reset_index(drop=True)

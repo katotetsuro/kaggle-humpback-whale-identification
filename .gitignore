@@ -2,6 +2,6 @@
 .DS_Store
 tensorboard_logs
 notebooks/.ipynb_checkpoints
-notebooks/test.ipynb
+notebooks/*.ipynb
 __pycache__
 submit
