@@ -8,10 +8,21 @@ jupyter notebookとtrainスクリプトの両方でで同じtransformにした�
 """
 
 
-def get_transform():
+def get_train_transform():
     data_transform = transforms.Compose([
         transforms.Grayscale(num_output_channels=3),
-        transforms.Resize((128, 128)),
+        transforms.RandomAffine(10,  scale=(0.8, 1.2),
+                                shear=0.2, resample=Image.BILINEAR),
+        transforms.Resize((256, 256)),
+        transforms.ToTensor()
+    ])
+    return data_transform
+
+
+def get_test_transform():
+    data_transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=3),
+        transforms.Resize((256, 256)),
         transforms.ToTensor()
     ])
     return data_transform

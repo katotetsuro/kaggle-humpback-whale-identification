@@ -17,13 +17,13 @@ from model.siamese import FeatureExtractor
 from online_mining_dataset import OnlineMiningDataset
 from model.debug_model import DebugModel
 #from metrics import TripletAccuracy, TripletLoss
-from transforms import get_transform
+from transforms import get_train_transform
 from torchvision.datasets import MNIST
 
 
 def get_data_loaders(train_batch_size, prob):
 
-    train_data_transform = get_transform()
+    train_data_transform = get_train_transform()
     if args.dataset == 'whale':
         train_loader = DataLoader(OnlineMiningDataset('data', transform=train_data_transform, min_size=args.min_size_per_class),
                                   batch_size=train_batch_size, shuffle=False)
