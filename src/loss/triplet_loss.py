@@ -13,7 +13,7 @@ class TripletLoss(nn.Module):
         self.semi_hard = True
         self.difficulty = 0.93
         self.max_difficulty = 0.95
-        self.iteration = 0
+        self.active_triplet_percent = 0
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -78,7 +78,7 @@ class TripletLoss(nn.Module):
         anchor_positive_dist = mask_anchor_positive * pairwise_dist
 
         # shape (batch_size, 1)
-        hardest_positive_dist = anchor_positive_dist.sort(dim=1)[0][:, order]
+        hardest_positive_dist = anchor_positive_dist.sort(dim=1)[0][:, order:]
         # tf.summary.scalar("hardest_positive_dist",
         #                   tf.reduce_mean(hardest_positive_dist))
 
@@ -93,7 +93,8 @@ class TripletLoss(nn.Module):
             max_anchor_negative_dist * (1.0 - mask_anchor_negative)
 
         # shape (batch_size,)
-        hardest_negative_dist = anchor_negative_dist.sort(dim=1)[0][:, -order]
+        hardest_negative_dist = anchor_negative_dist.sort(dim=1)[
+            0][:, :-order]
         # tf.summary.scalar("hardest_negative_dist",
         #                   tf.reduce_mean(hardest_negative_dist))
 
@@ -107,12 +108,8 @@ class TripletLoss(nn.Module):
             # pdb.set_trace()
         # Get final mean triplet loss
         average_loss = triplet_loss.mean()
-        active_triplet_percent = len(
+        self.active_triplet_percent = len(
             triplet_loss.nonzero()) / len(triplet_loss)
-
-        self.iteration += 1
-        if self.iteration % 100 == 0:
-            print('active triplet percentage:{}'.format(active_triplet_percent))
 
         return average_loss
 
