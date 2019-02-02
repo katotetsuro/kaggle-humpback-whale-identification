@@ -11,7 +11,7 @@ from ignite.engine import Events, create_supervised_trainer, create_supervised_e
 from ignite.metrics import Accuracy, Loss
 from ignite.handlers import ModelCheckpoint
 
-from data_loader import LabeledImageDataset
+from data_loader import WhaleLabeledImageDataset
 from model.gap_resnet import GapResnet
 
 
@@ -26,7 +26,7 @@ def get_data_loaders(train_batch_size):
         transforms.ToTensor()
     ])
 
-    train_loader = DataLoader(LabeledImageDataset('data', transform=train_data_transform),
+    train_loader = DataLoader(WhaleLabeledImageDataset('data', transform=train_data_transform),
                               batch_size=train_batch_size, shuffle=True)
     return train_loader
 
