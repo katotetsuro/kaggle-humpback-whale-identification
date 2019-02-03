@@ -12,7 +12,7 @@ class TripletLoss(nn.Module):
         self.margin = margin
         self.semi_hard = True
         self.difficulty = 0.93
-        self.max_difficulty = 0.95
+        self.max_difficulty = 1.0
         self.active_triplet_percent = 0
 
     def _pairwise_distances(self, embeddings):
@@ -109,7 +109,7 @@ class TripletLoss(nn.Module):
         # Get final mean triplet loss
         average_loss = triplet_loss.mean()
         self.active_triplet_percent = len(
-            triplet_loss.nonzero()) / len(triplet_loss)
+            triplet_loss.nonzero()) / triplet_loss.numel()
 
         return average_loss
 
