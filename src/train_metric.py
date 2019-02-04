@@ -28,25 +28,32 @@ def get_data_loaders(train_batch_size):
     if args.dataset == 'whale':
         train_data = OnlineMiningDataset(
             'data', transform=train_data_transform, min_size=args.min_size_per_class)
+        source_data = CsvLabeledImageDataset(
+            'data/train_with_id.csv', 'data/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
             'data/test_with_id.csv', 'data/train', transform=test_data_transform)
     elif args.dataset == 'mnist':
         print('mnistで試します')
         train_data = MNIST('~/.pytorch/mnist', download=True,
                            transform=train_data_transform)
+        source_data = MNIST('~/.pytorch/mnist', download=True,
+                            transform=test_data_transform)
         val_data = MNIST('~/.pytorch/mnist', download=True,
                          transform=test_data_transform, train=False)
 
     if subset > 0:
         print('datasetのsubsetを使います. size={}'.format(subset))
         train_data = Subset(train_data, range(subset))
+        source_data = Subset(source_data, range(subset))
         val_data = Subset(val_data, range(subset))
 
     train_loader = DataLoader(train_data,
                               batch_size=train_batch_size, shuffle=False, drop_last=True)
+    source_loader = DataLoader(
+        source_data, batch_size=train_batch_size, shuffle=False)
     val_loader = DataLoader(val_data, batch_size=train_batch_size)
 
-    return train_loader, val_loader
+    return train_loader, source_loader, val_loader
 
 
 def create_summary_writer(model, data_loader, log_dir):
@@ -97,7 +104,8 @@ def create_triplet_evaluator(model, loss_fn, device=None):
 
 
 def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, args):
-    train_loader, val_loader = get_data_loaders(train_batch_size)
+    train_loader, source_loader, val_loader = get_data_loaders(
+        train_batch_size)
     lasttime_resampled = 1
     if weight == '':
         model = FeatureExtractor(
@@ -147,7 +155,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     def log_training_results(engine):
 
         if engine.state.epoch % 3 == 0:
-            evaluator.run(train_loader)
+            evaluator.run(source_loader)
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']
             print("Training Results - Epoch: {}  Avg loss: {:.2f} Active triplets: {:.2f}"
@@ -193,7 +201,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             evaluator.run(val_loader)
             acc_calculator = TripletAccuracy()
             accuracy = acc_calculator.compute(
-                model, train_loader, val_loader)
+                model, train_loader, val_loader, device=device)
 
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']

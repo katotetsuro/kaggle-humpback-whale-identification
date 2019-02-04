@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 
 
-def run_one_epoch(model, data_loader):
+def run_one_epoch(model, data_loader, device='cpu'):
     pred = []
     gt = []
     with torch.no_grad():
@@ -19,7 +19,7 @@ def run_one_epoch(model, data_loader):
                 gt.append(t.cpu().numpy())
             else:
                 raise ValueError('invalid dataset. assume (x,t) or x')
-
+            x = x.to(device)
             y = model(x)
             pred.append(y.cpu().numpy())
 
@@ -33,11 +33,12 @@ def run_one_epoch(model, data_loader):
 
 class TripletAccuracy():
 
-    def compute(self, model, train_loader, val_loader, top_k=5):
+    def compute(self, model, source_loader, val_loader, top_k=5, device='cpu'):
         model.eval()
-        train_features, train_labels = run_one_epoch(model, train_loader)
-        val_features, val_labels = run_one_epoch(model, val_loader)
-        distances = pairwise_distances(val_features, train_features)
+        source_features, source_labels = run_one_epoch(
+            model, source_loader, device)
+        val_features, val_labels = run_one_epoch(model, val_loader, device)
+        distances = pairwise_distances(val_features, source_features)
 
         indexes_of_similars = np.argsort(distances, axis=1)[:, :top_k]
         weights = np.asarray([1/(k+1) for k in range(top_k)]).reshape(1, -1)
