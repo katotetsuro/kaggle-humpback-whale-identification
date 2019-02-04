@@ -31,7 +31,7 @@ def get_data_loaders(train_batch_size):
         source_data = CsvLabeledImageDataset(
             'data/train_with_id.csv', 'data/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
-            'data/test_with_id.csv', 'data/train', transform=test_data_transform)
+            'data/val_with_id.csv', 'data/train', transform=test_data_transform)
     elif args.dataset == 'mnist':
         print('mnistで試します')
         train_data = MNIST('~/.pytorch/mnist', download=True,
@@ -48,10 +48,11 @@ def get_data_loaders(train_batch_size):
         val_data = Subset(val_data, range(subset))
 
     train_loader = DataLoader(train_data,
-                              batch_size=train_batch_size, shuffle=False, drop_last=True)
+                              batch_size=train_batch_size, shuffle=False, drop_last=True, num_workers=4)
     source_loader = DataLoader(
-        source_data, batch_size=train_batch_size, shuffle=False)
-    val_loader = DataLoader(val_data, batch_size=train_batch_size)
+        source_data, batch_size=train_batch_size, shuffle=False, num_workers=4)
+    val_loader = DataLoader(
+        val_data, batch_size=train_batch_size, num_workers=4)
 
     return train_loader, source_loader, val_loader
 
