@@ -42,7 +42,7 @@ class TripletAccuracy():
 
         indexes_of_similars = np.argsort(distances, axis=1)[:, :top_k]
         weights = np.asarray([1/(k+1) for k in range(top_k)]).reshape(1, -1)
-        scores = (indexes_of_similars == val_labels.reshape(-1, 1)).astype(
+        scores = (source_labels[indexes_of_similars] == val_labels.reshape(-1, 1)).astype(
             np.float32) * weights
         scores = np.max(scores, axis=1)
         mean_average_precision = np.mean(scores)
