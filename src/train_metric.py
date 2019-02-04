@@ -146,7 +146,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
 
-        if engine.state.epoch % 5 == 0:
+        if engine.state.epoch % 3 == 0:
             evaluator.run(train_loader)
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']
@@ -160,15 +160,15 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             writer.add_scalar("training/learning_rate",
                               optimizer.param_groups[0]['lr'], engine.state.epoch)
 
-        if train_loss_fn.active_triplet_percent < 0.1 and avg_loss < 0.05:
-            e = engine.state.epoch
-            if e - lasttime_resampled < 2:
-                train_loss_fn.increase_difficulty(step=0.01)
+            if train_loss_fn.active_triplet_percent < 0.1 and avg_loss < 0.05:
+                e = engine.state.epoch
+                if e - lasttime_resampled < 2:
+                    train_loss_fn.increase_difficulty(step=0.01)
 
-            if args.dataset == 'whale':
-                print('データセットをサンプルし直します')
-                train_loader.dataset.sample()
-                lasttime_resampled = engine.state.epoch
+                if args.dataset == 'whale':
+                    print('データセットをサンプルし直します')
+                    train_loader.dataset.sample()
+                    lasttime_resampled = engine.state.epoch
 
     accuracy = 0.0
 
@@ -189,7 +189,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
-        if engine.state.epoch % 5 == 0:
+        if engine.state.epoch % 3 == 0:
             evaluator.run(val_loader)
             acc_calculator = TripletAccuracy()
             accuracy = acc_calculator.compute(
