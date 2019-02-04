@@ -180,22 +180,15 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                 else:
                     train_loss_fn.increase_difficulty(step=0.005)
 
-    accuracy = 0.0
-
-    def score_function(engine):
-        return accuracy
-
     # Setup model checkpoint:
     best_model_saver = ModelCheckpoint(log_dir,
                                        filename_prefix="model",
                                        score_name="val_acc",
-                                       score_function=score_function,
+                                       score_function=lambda engine: 0.0,
                                        n_saved=3,
                                        atomic=True,
                                        create_dir=True,
                                        require_empty=False,)
-    evaluator.add_event_handler(
-        Events.EPOCH_COMPLETED, best_model_saver, {'metric': model}, )
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
@@ -204,6 +197,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             acc_calculator = TripletAccuracy()
             accuracy = acc_calculator.compute(
                 model, train_loader, val_loader, device=device)
+            best_model_saver._score_function = lambda engine: accuracy
+            best_model_saver(engine, {'metric': model})
 
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']
