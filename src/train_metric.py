@@ -107,7 +107,6 @@ def create_triplet_evaluator(model, loss_fn, device=None):
 def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, log_dir, weight, args):
     train_loader, source_loader, val_loader = get_data_loaders(
         train_batch_size)
-    lasttime_resampled = 1
     if weight == '':
         model = FeatureExtractor(
             feature_dim=100) if not args.debug_model else DebugModel()
@@ -125,7 +124,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         optimizer = SGD(model.parameters(), lr=lr, momentum=momentum,
                         weight_decay=args.weight_decay)
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, epochs * len(train_loader.dataset)//train_batch_size)
+            optimizer, epochs)
     else:
         optimizer = Adam(model.parameters(), lr=lr,
                          weight_decay=args.weight_decay)
@@ -147,16 +146,11 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                   "".format(engine.state.epoch, iter, len(train_loader), engine.state.output))
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
-        if args.optimizer == 'sgd':
-            # learning rateのスケジューリングは、batch hard minigとresampleが意味なくなったら1/10する、とかで良さそう
-            # lr_scheduler.step()
-            pass
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
 
-        interval = 3
-        if engine.state.epoch % interval == 0:
+        if engine.state.epoch % 3 == 0:
             evaluator.run(train_loader)
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']
@@ -171,16 +165,16 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                               optimizer.param_groups[0]['lr'], engine.state.epoch)
 
             if train_loss_fn.active_triplet_percent < 0.2 and avg_loss < 0.05:
-                if args.dataset == 'whale':
-                    print('データセットをサンプルし直します')
-                    train_loader.dataset.sample()
-                    e = engine.state.epoch
-                    if e - lasttime_resampled < 2 * interval:
-                        train_loss_fn.increase_difficulty(step=0.01)
+                train_loss_fn.increase_difficulty(step=0.005)
 
-                    lasttime_resampled = e
-                else:
-                    train_loss_fn.increase_difficulty(step=0.005)
+        if args.dataset == 'whale':
+            print('データセットをサンプルし直します')
+            train_loader.dataset.sample()
+
+        if args.optimizer == 'sgd':
+            # learning rateのスケジューリングは、batch hard minigとresampleが意味なくなったら1/10する、とかで良さそう
+            lr_scheduler.step()
+            pass
 
     # Setup model checkpoint:
     best_model_saver = ModelCheckpoint(log_dir,
