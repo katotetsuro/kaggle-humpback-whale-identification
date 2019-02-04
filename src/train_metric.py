@@ -168,7 +168,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             writer.add_scalar("training/learning_rate",
                               optimizer.param_groups[0]['lr'], engine.state.epoch)
 
-            if train_loss_fn.active_triplet_percent < 0.1 and avg_loss < 0.05:
+            if train_loss_fn.active_triplet_percent < 0.2 and avg_loss < 0.05:
                 if args.dataset == 'whale':
                     print('データセットをサンプルし直します')
                     train_loader.dataset.sample()
