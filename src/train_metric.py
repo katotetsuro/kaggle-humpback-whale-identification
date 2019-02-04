@@ -156,7 +156,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     def log_training_results(engine):
 
         if engine.state.epoch % 3 == 0:
-            evaluator.run(source_loader)
+            evaluator.run(train_loader)
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']
             print("Training Results - Epoch: {}  Avg loss: {:.2f} Active triplets: {:.2f}"
@@ -196,7 +196,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             evaluator.run(val_loader)
             acc_calculator = TripletAccuracy()
             accuracy = acc_calculator.compute(
-                model, train_loader, val_loader, device=device)
+                model, source_loader, val_loader, device=device)
             best_model_saver._score_function = lambda engine: accuracy
             best_model_saver(engine, {'metric': model})
 
