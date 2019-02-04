@@ -177,7 +177,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                     if e - lasttime_resampled < 2:
                         train_loss_fn.increase_difficulty(step=0.01)
                 else:
-                    train_loss_fn.increase_difficulty(step=0.05)
+                    train_loss_fn.increase_difficulty(step=0.005)
 
     accuracy = 0.0
 
@@ -187,14 +187,14 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     # Setup model checkpoint:
     best_model_saver = ModelCheckpoint(log_dir,
                                        filename_prefix="model",
-                                       score_name="train_acc",
+                                       score_name="val_acc",
                                        score_function=score_function,
                                        n_saved=3,
                                        atomic=True,
                                        create_dir=True,
                                        require_empty=False,)
     evaluator.add_event_handler(
-        Events.COMPLETED, best_model_saver, {'metric_model': model})
+        Events.EPOCH_COMPLETED, best_model_saver, {'metric': model}, )
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
