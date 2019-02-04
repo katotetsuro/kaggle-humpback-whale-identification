@@ -48,11 +48,11 @@ def get_data_loaders(train_batch_size):
         val_data = Subset(val_data, range(subset))
 
     train_loader = DataLoader(train_data,
-                              batch_size=train_batch_size, shuffle=False, drop_last=True, num_workers=4)
+                              batch_size=train_batch_size, shuffle=False, drop_last=True, num_workers=args.num_workers)
     source_loader = DataLoader(
-        source_data, batch_size=train_batch_size, shuffle=False, num_workers=4)
+        source_data, batch_size=train_batch_size, shuffle=False, num_workers=args.num_workers)
     val_loader = DataLoader(
-        val_data, batch_size=train_batch_size, num_workers=4)
+        val_data, batch_size=train_batch_size, num_workers=args.num_workers)
 
     return train_loader, source_loader, val_loader
 
@@ -251,6 +251,8 @@ if __name__ == "__main__":
     parser.add_argument('--optimizer', choices=['sgd', 'adam'], default='sgd')
     parser.add_argument('--subset', default=-1, type=int,
                         help='subset size of dataset for debug')
+    parser.add_argument('--num-workers', default=8,
+                        help='number of workers of data loader')
 
     args = parser.parse_args()
     print(args)
