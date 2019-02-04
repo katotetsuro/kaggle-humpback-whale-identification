@@ -155,7 +155,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
 
-        if engine.state.epoch % 3 == 0:
+        interval = 3
+        if engine.state.epoch % interval == 0:
             evaluator.run(train_loader)
             metrics = evaluator.state.metrics
             avg_loss = metrics['loss']
@@ -173,10 +174,11 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                 if args.dataset == 'whale':
                     print('データセットをサンプルし直します')
                     train_loader.dataset.sample()
-                    lasttime_resampled = engine.state.epoch
                     e = engine.state.epoch
-                    if e - lasttime_resampled < 2:
+                    if e - lasttime_resampled < 2 * interval:
                         train_loss_fn.increase_difficulty(step=0.01)
+
+                    lasttime_resampled = e
                 else:
                     train_loss_fn.increase_difficulty(step=0.005)
 
