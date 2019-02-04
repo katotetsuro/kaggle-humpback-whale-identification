@@ -68,7 +68,6 @@ class OnlineMiningDataset(data.Dataset):
 
     def sample(self):
         dfs = []
-#        labels = [l+1 for l in range(len(self.counts)-1)]
         labels = np.unique(self.df_without_new_whale.label)
         random.shuffle(labels)
 
