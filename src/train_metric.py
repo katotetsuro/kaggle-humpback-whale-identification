@@ -109,7 +109,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         train_batch_size)
     if weight == '':
         model = FeatureExtractor(
-            mid_dim=args.mid_dim, out_dim=args.out_dim) if not args.debug_model else DebugModel()
+            mid_dim=args.mid_dim, out_dim=args.out_dim, backbone=args.backbone) if not args.debug_model else DebugModel()
     else:
         print('loading initial weight from {}'.format(weight))
         loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -244,6 +244,8 @@ if __name__ == "__main__":
                         help='dimension of mid feature')
     parser.add_argument('--out-dim', default=128,
                         help='dimension of out feature')
+    parser.add_argument('--backbone', choices=['resnet18', 'resnet34', 'resnet50',
+                                               'resnet101'], default='resnet18', help='base feature extractor')
 
     args = parser.parse_args()
     print(args)
