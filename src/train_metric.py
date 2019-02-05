@@ -151,20 +151,16 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     def log_training_results(engine):
 
         if engine.state.epoch % 3 == 0:
-            evaluator.run(train_loader)
-            metrics = evaluator.state.metrics
-            avg_loss = metrics['loss']
-            print("Training Results - Epoch: {}  Avg loss: {:.2f} Active triplets: {:.2f}"
-                  .format(engine.state.epoch, avg_loss, train_loss_fn.active_triplet_percent))
-            writer.add_scalar("training/avg_loss",
-                              avg_loss, engine.state.epoch)
+            print("Training Results - Epoch: {} Active triplets: {:.2f} Difficulty: {:.2f}"
+                  .format(engine.state.epoch, train_loss_fn.active_triplet_percent, train_loss_fn.difficulty))
+            writer.add_scalar("training/difficulty",
+                              train_loss_fn.difficulty, engine.state.epoch)
             writer.add_scalar('training/active_triplet_pct',
                               train_loss_fn.active_triplet_percent, engine.state.epoch)
-
             writer.add_scalar("training/learning_rate",
                               optimizer.param_groups[0]['lr'], engine.state.epoch)
 
-            if train_loss_fn.active_triplet_percent < 0.2 and avg_loss < 0.05:
+            if train_loss_fn.active_triplet_percent < 0.2 and engine.state.output < 0.05:
                 train_loss_fn.increase_difficulty(step=0.005)
 
         if args.dataset == 'whale':
