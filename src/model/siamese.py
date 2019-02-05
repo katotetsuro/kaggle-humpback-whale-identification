@@ -4,10 +4,10 @@ import torch
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self, feature_dim=500):
+    def __init__(self, mid_dim, out_dim):
         super().__init__()
-        self.net = GapResnet(n_class=feature_dim)
-        self.fc = nn.Linear(feature_dim, 64)
+        self.net = GapResnet(n_class=mid_dim)
+        self.fc = nn.Linear(mid_dim, out_dim)
 
     def forward(self, x):
         h = self.net(x)

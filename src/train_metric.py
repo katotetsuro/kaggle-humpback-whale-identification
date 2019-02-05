@@ -109,7 +109,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         train_batch_size)
     if weight == '':
         model = FeatureExtractor(
-            feature_dim=100) if not args.debug_model else DebugModel()
+            mid_dim=args.mid_dim, out_dim=args.out_dim) if not args.debug_model else DebugModel()
     else:
         print('loading initial weight from {}'.format(weight))
         loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -240,6 +240,10 @@ if __name__ == "__main__":
                         help='subset size of dataset for debug')
     parser.add_argument('--num-workers', default=8,
                         help='number of workers of data loader')
+    parser.add_argument('--mid-dim', default=500,
+                        help='dimension of mid feature')
+    parser.add_argument('--out-dim', default=128,
+                        help='dimension of out feature')
 
     args = parser.parse_args()
     print(args)
