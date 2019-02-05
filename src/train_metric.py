@@ -129,13 +129,12 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         optimizer = Adam(model.parameters(), lr=lr,
                          weight_decay=args.weight_decay)
 
-    train_loss_fn = TripletLoss(margin=args.margin)
+    loss_fn = TripletLoss(margin=args.margin)
     trainer = create_supervised_trainer(
-        model, optimizer, train_loss_fn, device=device)
-    test_loss_fn = TripletLoss(margin=args.margin)
+        model, optimizer, loss_fn, device=device)
     evaluator = create_supervised_evaluator(model,
                                             metrics={
-                                                'loss': Loss(test_loss_fn)},
+                                                'loss': Loss(loss_fn)},
                                             device=device)
 
     @trainer.on(Events.ITERATION_COMPLETED)
@@ -150,18 +149,17 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
 
-        if engine.state.epoch % 3 == 0:
-            print("Training Results - Epoch: {} Active triplets: {:.2f} Difficulty: {:.2f}"
-                  .format(engine.state.epoch, train_loss_fn.active_triplet_percent, train_loss_fn.difficulty))
-            writer.add_scalar("training/difficulty",
-                              train_loss_fn.difficulty, engine.state.epoch)
-            writer.add_scalar('training/active_triplet_pct',
-                              train_loss_fn.active_triplet_percent, engine.state.epoch)
-            writer.add_scalar("training/learning_rate",
-                              optimizer.param_groups[0]['lr'], engine.state.epoch)
+        print("Training Results - Epoch: {} Active triplets: {:.2f} Difficulty: {:.2f}"
+              .format(engine.state.epoch, loss_fn.active_triplet_percent, loss_fn.difficulty))
+        writer.add_scalar("training/difficulty",
+                          loss_fn.difficulty, engine.state.epoch)
+        writer.add_scalar('training/active_triplet_pct',
+                          loss_fn.active_triplet_percent, engine.state.epoch)
+        writer.add_scalar("training/learning_rate",
+                          optimizer.param_groups[0]['lr'], engine.state.epoch)
 
-            if train_loss_fn.active_triplet_percent < 0.2 and engine.state.output < 0.05:
-                train_loss_fn.increase_difficulty(step=0.005)
+        if loss_fn.active_triplet_percent < 0.2 and engine.state.output < 0.05:
+            loss_fn.increase_difficulty(step=0.005)
 
         if args.dataset == 'whale':
             print('データセットをサンプルし直します')
