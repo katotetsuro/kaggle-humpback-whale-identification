@@ -27,7 +27,7 @@ def get_data_loaders(train_batch_size):
     subset = args.subset
     if args.dataset == 'whale':
         train_data = OnlineMiningDataset(
-            'data', transform=train_data_transform, min_size=args.min_size_per_class)
+            'data', transform=train_data_transform, min_size=args.min_size_per_class, exclude_new_whale=False)
         source_data = CsvLabeledImageDataset(
             'data/train_with_id.csv', 'data/cropped/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
@@ -129,7 +129,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         optimizer = Adam(model.parameters(), lr=lr,
                          weight_decay=args.weight_decay)
 
-    loss_fn = TripletLoss(margin=args.margin)
+    loss_fn = TripletLoss(margin=args.margin, ignore_labels=[0])
     trainer = create_supervised_trainer(
         model, optimizer, loss_fn, device=device)
     evaluator = create_supervised_evaluator(model,

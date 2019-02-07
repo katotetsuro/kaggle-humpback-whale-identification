@@ -7,13 +7,14 @@ https://omoindrot.github.io/triplet-loss#a-better-implementation-with-online-tri
 
 
 class TripletLoss(nn.Module):
-    def __init__(self, margin):
+    def __init__(self, margin, ignore_labels=[]):
         super().__init__()
         self.margin = margin
         self.semi_hard = True
         self.difficulty = 0.93
         self.max_difficulty = 1.0
         self.active_triplet_percent = 0
+        self.ignore_labels = ignore_labels
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -61,6 +62,15 @@ class TripletLoss(nn.Module):
 
         return mask
 
+    def _get_anchor_inlier_triplet_mask(self, labels):
+        ignore_labels = torch.Tensor(
+            self.ignore_labels, device=labels.device).long()
+        match = torch.sum(labels == ignore_labels[:, None], dim=0)
+        mask = match[None] + match[:, None]
+        mask = torch.min(mask, torch.ones_like(mask)).int()
+        mask = 1 - mask
+        return mask
+
     def forward(self, embeddings, labels):
         return self.batch_hard(embeddings, labels)
 
@@ -74,8 +84,13 @@ class TripletLoss(nn.Module):
         mask_anchor_positive = self._get_anchor_positive_triplet_mask(
             labels).float()
 
+        # ignore specific label's positive distance (e.g. label==0, which indicates new whale)
+        mask_anchor_inlier = self._get_anchor_inlier_triplet_mask(
+            labels).float()
+
         # We put to 0 any element where (a, p) is not valid (valid if a != p and label(a) == label(p))
         anchor_positive_dist = mask_anchor_positive * pairwise_dist
+        anchor_positive_dist = mask_anchor_inlier * anchor_positive_dist
 
         # shape (batch_size, 1)
         hardest_positive_dist = anchor_positive_dist.sort(dim=1)[0][:, order:]

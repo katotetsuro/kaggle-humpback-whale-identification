@@ -19,12 +19,14 @@ class OnlineMiningDataset(data.Dataset):
     train_with_id.csvの作り方はnotebooks/split_dataset.ipynbを参照
     """
 
-    def __init__(self, data_dir, transform=None, image_per_class=4, limit=None, min_size=1):
+    def __init__(self, data_dir, transform=None, image_per_class=4, limit=None, min_size=1, exclude_new_whale=True):
         df = pd.read_csv(join(data_dir, 'train_with_id.csv'))
         self.image_dir = join(data_dir, 'cropped/train')
 
         # min_size枚以上の画像がある個体に絞る
-        self.df_without_new_whale = df[df.label > 0]
+        # todo df_without_new_whaleという変数名は、exclude_new_whale=Falseのときに意味不明になるな
+        self.df_without_new_whale = df[df.label >
+                                       0] if exclude_new_whale else df
         _, self.counts = np.unique(
             df.label, return_counts=True)
         self.df_without_new_whale = self.df_without_new_whale[
