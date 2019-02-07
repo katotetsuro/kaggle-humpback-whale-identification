@@ -13,7 +13,7 @@ def get_train_transform():
         transforms.Grayscale(num_output_channels=3),
         transforms.RandomAffine(10,  scale=(0.8, 1.2),
                                 shear=0.2, resample=Image.BILINEAR),
-        transforms.Resize((256, 256)),
+        transforms.Resize((224, 224)),
         transforms.ToTensor()
     ])
     return data_transform
@@ -22,7 +22,7 @@ def get_train_transform():
 def get_test_transform():
     data_transform = transforms.Compose([
         transforms.Grayscale(num_output_channels=3),
-        transforms.Resize((256, 256)),
+        transforms.Resize((224, 224)),
         transforms.ToTensor()
     ])
     return data_transform
