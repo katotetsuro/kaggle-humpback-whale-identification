@@ -29,9 +29,9 @@ def get_data_loaders(train_batch_size):
         train_data = OnlineMiningDataset(
             'data', transform=train_data_transform, min_size=args.min_size_per_class)
         source_data = CsvLabeledImageDataset(
-            'data/train_with_id.csv', 'data/train', transform=test_data_transform)
+            'data/train_with_id.csv', 'data/cropped/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
-            'data/val_with_id.csv', 'data/train', transform=test_data_transform)
+            'data/val_with_id.csv', 'data/cropped/train', transform=test_data_transform)
     elif args.dataset == 'mnist':
         print('mnistで試します')
         train_data = MNIST('~/.pytorch/mnist', download=True,

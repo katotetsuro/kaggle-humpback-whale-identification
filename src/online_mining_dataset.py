@@ -21,7 +21,7 @@ class OnlineMiningDataset(data.Dataset):
 
     def __init__(self, data_dir, transform=None, image_per_class=4, limit=None, min_size=1):
         df = pd.read_csv(join(data_dir, 'train_with_id.csv'))
-        self.image_dir = join(data_dir, 'train')
+        self.image_dir = join(data_dir, 'cropped/train')
 
         # min_size枚以上の画像がある個体に絞る
         self.df_without_new_whale = df[df.label > 0]
