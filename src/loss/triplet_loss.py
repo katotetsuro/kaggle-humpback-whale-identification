@@ -7,11 +7,11 @@ https://omoindrot.github.io/triplet-loss#a-better-implementation-with-online-tri
 
 
 class TripletLoss(nn.Module):
-    def __init__(self, margin, ignore_labels=[]):
+    def __init__(self, margin, difficulty=0.93, ignore_labels=[]):
         super().__init__()
         self.margin = margin
         self.semi_hard = True
-        self.difficulty = 0.93
+        self.difficulty = difficulty
         self.max_difficulty = 1.0
         self.active_triplet_percent = 0
         self.ignore_labels = ignore_labels
@@ -64,7 +64,7 @@ class TripletLoss(nn.Module):
 
     def _get_anchor_inlier_triplet_mask(self, labels):
         ignore_labels = torch.Tensor(
-            self.ignore_labels, device=labels.device).long()
+            self.ignore_labels).long().to(labels.device)
         match = torch.sum(labels == ignore_labels[:, None], dim=0)
         mask = match[None] + match[:, None]
         mask = torch.min(mask, torch.ones_like(mask)).int()

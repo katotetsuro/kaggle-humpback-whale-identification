@@ -110,6 +110,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     if weight == '':
         model = FeatureExtractor(
             mid_dim=args.mid_dim, out_dim=args.out_dim, backbone=args.backbone) if not args.debug_model else DebugModel()
+
     else:
         print('loading initial weight from {}'.format(weight))
         loc = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -129,7 +130,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         optimizer = Adam(model.parameters(), lr=lr,
                          weight_decay=args.weight_decay)
 
-    loss_fn = TripletLoss(margin=args.margin, ignore_labels=[0])
+    loss_fn = TripletLoss(margin=args.margin,
+                          difficulty=args.difficulty, ignore_labels=[0])
     trainer = create_supervised_trainer(
         model, optimizer, loss_fn, device=device)
     evaluator = create_supervised_evaluator(model,
@@ -244,6 +246,8 @@ if __name__ == "__main__":
                         help='dimension of out feature')
     parser.add_argument('--backbone', choices=['resnet18', 'resnet34', 'resnet50',
                                                'resnet101'], default='resnet18', help='base feature extractor')
+    parser.add_argument('--difficulty', default=0.95,
+                        help='loss functionのdifficulty初期値')
 
     args = parser.parse_args()
     print(args)
