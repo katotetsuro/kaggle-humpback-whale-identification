@@ -73,7 +73,7 @@ class OnlineMiningDataset(data.Dataset):
         labels = np.unique(self.df_without_new_whale.label)
         random.shuffle(labels)
 
-        for _ in range(2000//len(labels)):
+        for _ in range(max(1, 2000//len(labels))):
             for l in labels:
                 d = self.df_without_new_whale[self.df_without_new_whale.label == l]
                 replace = len(d) < self.image_per_class
