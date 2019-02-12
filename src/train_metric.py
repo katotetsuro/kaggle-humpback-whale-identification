@@ -246,7 +246,7 @@ if __name__ == "__main__":
                         help='dimension of out feature')
     parser.add_argument('--backbone', choices=['resnet18', 'resnet34', 'resnet50',
                                                'resnet101'], default='resnet18', help='base feature extractor')
-    parser.add_argument('--difficulty', default=0.95,
+    parser.add_argument('--difficulty', default=0.95, type=float,
                         help='loss functionのdifficulty初期値')
 
     args = parser.parse_args()
