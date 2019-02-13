@@ -12,7 +12,7 @@ def get_train_transform():
     data_transform = transforms.Compose([
         transforms.RandomGrayscale(p=0.3),
         transforms.ColorJitter(
-            brightness=20, contrast=20, saturation=20, hue=-0.5),
+            brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.RandomAffine(10,  scale=(0.8, 1.2),
                                 shear=0.2, resample=Image.BILINEAR),
         transforms.Resize((224, 224)),
