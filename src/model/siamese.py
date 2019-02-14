@@ -4,7 +4,7 @@ import torch
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self, mid_dim, out_dim, backbone, normalize):
+    def __init__(self, mid_dim, out_dim, backbone, normalize=True):
         super().__init__()
         self.net = GapResnet(n_class=mid_dim, backbone=backbone)
         self.fc = nn.Linear(mid_dim, out_dim)
