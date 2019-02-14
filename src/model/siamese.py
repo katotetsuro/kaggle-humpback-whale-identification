@@ -4,18 +4,28 @@ import torch
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self, mid_dim, out_dim, backbone):
+    def __init__(self, mid_dim, out_dim, backbone, normalize):
         super().__init__()
         self.net = GapResnet(n_class=mid_dim, backbone=backbone)
         self.fc = nn.Linear(mid_dim, out_dim)
+        self.normalize = normalize
 
     def forward(self, x):
         h = self.net(x)
         h = self.fc(h)
-#        l = (h**2).sum(dim=1).sqrt().reshape(-1, 1)
-#        h = h / l
+        if self.normalize:
+            l = (h**2).sum(dim=1).sqrt().reshape(-1, 1)
+            h = h / l
 
         return h
+
+    def freeze(self):
+        for p in self.net.parameters():
+            p.requires_grad = False
+
+    def unfreeze(self):
+        for p in self.net.parameters():
+            p.requires_grad = True
 
 
 class Siamese(nn.Module):

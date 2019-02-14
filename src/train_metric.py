@@ -138,6 +138,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                                             metrics={
                                                 'loss': Loss(loss_fn)},
                                             device=device)
+    if args.freeze_schedule > 0:
+        model.freeze()
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_loss(engine):
@@ -171,6 +173,10 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             # learning rateのスケジューリングは、batch hard minigとresampleが意味なくなったら1/10する、とかで良さそう
             lr_scheduler.step()
             pass
+
+        if engine.state.epoch == args.freeze_schedule:
+            print('ベースモジュールをunfreezeします')
+            model.unfreeze()
 
     # Setup model checkpoint:
     best_model_saver = ModelCheckpoint(log_dir,
@@ -248,6 +254,7 @@ if __name__ == "__main__":
                                                'resnet101'], default='resnet18', help='base feature extractor')
     parser.add_argument('--difficulty', default=0.95, type=float,
                         help='loss functionのdifficulty初期値')
+    parser.add_argument('--freeze-schedule', default=5, type=int)
 
     args = parser.parse_args()
     print(args)
