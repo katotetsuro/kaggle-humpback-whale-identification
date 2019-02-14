@@ -126,7 +126,12 @@ class TripletLoss(nn.Module):
         self.active_triplet_percent = len(
             triplet_loss.nonzero()) / triplet_loss.numel()
 
-        return average_loss
+        # force positives are converged to points
+        n_positive = torch.sum(anchor_positive_dist > 0)
+        mean_positive_distance = torch.sum(
+            anchor_positive_dist) / n_positive if n_positive.item() > 0 else 0
+
+        return average_loss + mean_positive_distance
 
     def increase_difficulty(self, step=0.1):
         self.difficulty += step
