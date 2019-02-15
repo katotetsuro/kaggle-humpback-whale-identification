@@ -48,7 +48,30 @@ class TripletAccuracy():
         mean_average_precision = np.mean(scores)
         model.train()
 
-        return mean_average_precision
+        ids = []
+        for i in indexes_of_similars:
+            unique_labels = []
+            for j in i:  # trainのj番目のサンプルを指す
+                l = source_labels[j]
+                if not l in unique_labels:
+                    unique_labels.append(l)
+
+                if len(unique_labels) == top_k:
+                    break
+
+            while (len(unique_labels) != 5):
+                unique_labels.append(-1)
+            ids.append(unique_labels)
+
+        unique_labels = np.asarray(ids)
+        import pdb
+        pdb.set_trace()
+        scores_2 = (unique_labels == val_labels.reshape(-1, 1)).astype(
+            np.float32) * weights
+        scores_2 = np.max(scores_2, axis=1)
+        unique_precision = np.mean(scores_2)
+
+        return mean_average_precision, unique_precision
 
 
 class TripletLoss(Metric):

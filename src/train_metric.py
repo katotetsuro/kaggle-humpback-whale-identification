@@ -17,30 +17,30 @@ from online_mining_dataset import OnlineMiningDataset
 from data_loader import CsvLabeledImageDataset
 from model.debug_model import DebugModel
 from metrics import TripletAccuracy
-from transforms import get_train_transform, get_test_transform
+from transforms import get_train_transform, get_test_transform, get_mnist_transform
 from torchvision.datasets import MNIST
 from pathlib import Path
 
 
 def get_data_loaders(train_batch_size):
-    train_data_transform = get_train_transform()
-    test_data_transform = get_test_transform()
     subset = args.subset
     if args.dataset == 'whale':
+        test_data_transform = get_test_transform()
         train_data = OnlineMiningDataset(
-            'data', transform=train_data_transform, min_size=args.min_size_per_class, exclude_new_whale=False)
+            'data', transform=get_train_transform(), min_size=args.min_size_per_class, exclude_new_whale=False)
         source_data = CsvLabeledImageDataset(
             'data/train_with_id.csv', 'data/cropped/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
             'data/val_with_id.csv', 'data/cropped/train', transform=test_data_transform)
     elif args.dataset == 'mnist':
         print('mnistで試します')
+        t = get_mnist_transform()
         train_data = MNIST('~/.pytorch/mnist', download=True,
-                           transform=train_data_transform)
+                           transform=t)
         source_data = MNIST('~/.pytorch/mnist', download=True,
-                            transform=test_data_transform)
+                            transform=t)
         val_data = MNIST('~/.pytorch/mnist', download=True,
-                         transform=test_data_transform, train=False)
+                         transform=t, train=False)
 
     if subset > 0:
         print('datasetのsubsetを使います. size={}'.format(subset))
@@ -167,7 +167,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
 
-        if loss_fn.active_triplet_percent < 0.2 and engine.state.output < 0.05:
+        if loss_fn.active_triplet_percent < 0.2 and loss_fn.average_triplet_loss < 0.05:
             loss_fn.increase_difficulty(step=0.005)
 
         if args.dataset == 'whale':
@@ -198,7 +198,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         if engine.state.epoch % 3 == 0:
             evaluator.run(val_loader)
             acc_calculator = TripletAccuracy()
-            accuracy = acc_calculator.compute(
+            accuracy, accuracy2 = acc_calculator.compute(
                 model, source_loader, val_loader, device=device)
             best_model_saver._score_function = lambda engine: accuracy
             best_model_saver(engine, {'metric': model})
@@ -211,6 +211,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                               avg_loss, engine.state.epoch)
             writer.add_scalar("valdation/avg_accuracy",
                               accuracy, engine.state.epoch)
+            writer.add_scalar("valdation/avg_accuracy2",
+                              accuracy2, engine.state.epoch)
 
     # kick everything off
     trainer.run(train_loader, max_epochs=epochs)
