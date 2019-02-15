@@ -40,7 +40,8 @@ class TripletAccuracy():
         val_features, val_labels = run_one_epoch(model, val_loader, device)
         distances = pairwise_distances(val_features, source_features)
 
-        indexes_of_similars = np.argsort(distances, axis=1)[:, :top_k]
+        indexes = np.argsort(distances, axis=1)
+        indexes_of_similars = indexes[:, :top_k]
         weights = np.asarray([1/(k+1) for k in range(top_k)]).reshape(1, -1)
         scores = (source_labels[indexes_of_similars] == val_labels.reshape(-1, 1)).astype(
             np.float32) * weights
@@ -49,7 +50,7 @@ class TripletAccuracy():
         model.train()
 
         ids = []
-        for i in indexes_of_similars:
+        for i in indexes:
             unique_labels = []
             for j in i:  # trainのj番目のサンプルを指す
                 l = source_labels[j]
