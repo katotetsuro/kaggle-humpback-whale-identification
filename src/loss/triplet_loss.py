@@ -15,6 +15,8 @@ class TripletLoss(nn.Module):
         self.max_difficulty = 1.0
         self.active_triplet_percent = 0
         self.ignore_labels = ignore_labels
+        self.average_triplet_loss = 0
+        self.average_positive_dist = 0
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -129,9 +131,13 @@ class TripletLoss(nn.Module):
         # force positives are converged to points
         n_positive = torch.sum(anchor_positive_dist > 0)
         mean_positive_distance = torch.sum(
-            anchor_positive_dist) / n_positive if n_positive.item() > 0 else 0
+            anchor_positive_dist) / n_positive if n_positive.item() > 0 else torch.zeros(1)
 
-        return average_loss + mean_positive_distance
+        self.average_triplet_loss = self.average_triplet_loss * \
+            0.9 + average_loss.item() * 0.1
+        self.average_positive_dist = self.average_positive_dist * \
+            0.9 + mean_positive_distance.item() * 0.1
+        return average_loss + 0.5 * mean_positive_distance
 
     def increase_difficulty(self, step=0.1):
         self.difficulty += step
