@@ -64,8 +64,6 @@ class TripletAccuracy():
             ids.append(unique_labels)
 
         unique_labels = np.asarray(ids)
-        import pdb
-        pdb.set_trace()
         scores_2 = (unique_labels == val_labels.reshape(-1, 1)).astype(
             np.float32) * weights
         scores_2 = np.max(scores_2, axis=1)
