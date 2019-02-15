@@ -109,7 +109,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         train_batch_size)
     if weight == '':
         model = FeatureExtractor(
-            mid_dim=args.mid_dim, out_dim=args.out_dim, backbone=args.backbone) if not args.debug_model else DebugModel()
+            mid_dim=args.mid_dim, out_dim=args.out_dim, backbone=args.backbone, normalize=args.normalize) if not args.debug_model else DebugModel()
 
     else:
         print('loading initial weight from {}'.format(weight))
@@ -255,6 +255,7 @@ if __name__ == "__main__":
     parser.add_argument('--difficulty', default=0.95, type=float,
                         help='loss functionのdifficulty初期値')
     parser.add_argument('--freeze-schedule', default=5, type=int)
+    parser.add_argument('--normalize', action='store_true')
 
     args = parser.parse_args()
     print(args)
