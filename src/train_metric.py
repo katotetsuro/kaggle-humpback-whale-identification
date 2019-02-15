@@ -109,7 +109,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
         train_batch_size)
     if weight == '':
         model = FeatureExtractor(
-            mid_dim=args.mid_dim, out_dim=args.out_dim, backbone=args.backbone, normalize=args.normalize) if not args.debug_model else DebugModel()
+            mid_dim=args.mid_dim, out_dim=args.out_dim, backbone=args.backbone, normalize=args.normalize, gap=args.gap) if not args.debug_model else DebugModel()
 
     else:
         print('loading initial weight from {}'.format(weight))
@@ -159,6 +159,10 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                           loss_fn.difficulty, engine.state.epoch)
         writer.add_scalar('training/active_triplet_pct',
                           loss_fn.active_triplet_percent, engine.state.epoch)
+        writer.add_scalar('training/triplet_loss',
+                          loss_fn.average_triplet_loss, engine.state.epoch)
+        writer.add_scalar('training/positive_distance_loss',
+                          loss_fn.average_positive_dist, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
 
@@ -256,6 +260,7 @@ if __name__ == "__main__":
                         help='loss functionのdifficulty初期値')
     parser.add_argument('--freeze-schedule', default=5, type=int)
     parser.add_argument('--normalize', action='store_true')
+    parser.add_argument('--gap', action='store_true')
 
     args = parser.parse_args()
     print(args)

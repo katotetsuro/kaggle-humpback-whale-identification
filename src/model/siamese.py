@@ -4,9 +4,10 @@ import torch
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self, mid_dim, out_dim, backbone, normalize=True):
+    def __init__(self, mid_dim, out_dim, backbone, normalize=True, gap=True):
         super().__init__()
-        self.net = GapResnet(n_class=mid_dim, backbone=backbone)
+        self.net = GapResnet(
+            n_class=mid_dim, backbone=backbone, global_average_pooling=gap)
         self.fc = nn.Linear(mid_dim, out_dim)
         self.normalize = normalize
 
