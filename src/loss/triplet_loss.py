@@ -131,7 +131,7 @@ class TripletLoss(nn.Module):
         # force positives are converged to points
         n_positive = torch.sum(anchor_positive_dist > 0)
         mean_positive_distance = torch.sum(
-            anchor_positive_dist) / n_positive if n_positive.item() > 0 else 0
+            anchor_positive_dist) / n_positive if n_positive.item() > 0 else torch.zeros_like(average_loss)
 
         self.average_triplet_loss = self.average_triplet_loss * \
             0.9 + average_loss.item() * 0.1
