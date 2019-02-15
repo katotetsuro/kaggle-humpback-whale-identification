@@ -27,3 +27,11 @@ def get_test_transform():
         transforms.ToTensor()
     ])
     return data_transform
+
+
+def get_mnist_transform():
+    data_transform = transforms.Compose([
+        transforms.Grayscale(num_output_channels=3),
+        transforms.ToTensor()
+    ])
+    return data_transform
