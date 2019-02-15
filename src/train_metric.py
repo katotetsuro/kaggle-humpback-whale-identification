@@ -19,6 +19,7 @@ from model.debug_model import DebugModel
 from metrics import TripletAccuracy
 from transforms import get_train_transform, get_test_transform
 from torchvision.datasets import MNIST
+from pathlib import Path
 
 
 def get_data_loaders(train_batch_size):
@@ -264,6 +265,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     print(args)
+
+    Path(args.log_dir).mkdir(parents=True, exist_ok=True)
+    with open(Path(args.log_dir).joinpath('args.txt'), 'w') as f:
+        f.write(str(args))
 
     run(args.batch_size, args.val_batch_size, args.epochs, args.lr, args.momentum,
         args.log_interval, args.log_dir, args.weight, args)
