@@ -253,9 +253,9 @@ if __name__ == "__main__":
                         help='subset size of dataset for debug')
     parser.add_argument('--num-workers', default=8,
                         help='number of workers of data loader')
-    parser.add_argument('--mid-dim', default=500,
+    parser.add_argument('--mid-dim', default=500, type=int,
                         help='dimension of mid feature')
-    parser.add_argument('--out-dim', default=128,
+    parser.add_argument('--out-dim', default=128, type=int,
                         help='dimension of out feature')
     parser.add_argument('--backbone', choices=['resnet18', 'resnet34', 'resnet50',
                                                'resnet101'], default='resnet18', help='base feature extractor')
