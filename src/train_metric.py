@@ -132,7 +132,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                          weight_decay=args.weight_decay)
 
     loss_fn = TripletLoss(margin=args.margin,
-                          difficulty=args.difficulty, ignore_labels=[0])
+                          difficulty=args.difficulty, ignore_labels=[0],
+                          distance_weight=args.distance_weight)
     trainer = create_supervised_trainer(
         model, optimizer, loss_fn, device=device)
     evaluator = create_supervised_evaluator(model,
@@ -264,6 +265,7 @@ if __name__ == "__main__":
     parser.add_argument('--freeze-schedule', default=5, type=int)
     parser.add_argument('--normalize', action='store_true')
     parser.add_argument('--gap', action='store_true')
+    parser.add_argument('--distance-weight', default=0.5, type=float)
 
     args = parser.parse_args()
     print(args)

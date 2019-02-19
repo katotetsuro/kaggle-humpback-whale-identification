@@ -7,7 +7,7 @@ https://omoindrot.github.io/triplet-loss#a-better-implementation-with-online-tri
 
 
 class TripletLoss(nn.Module):
-    def __init__(self, margin, difficulty=0.93, ignore_labels=[]):
+    def __init__(self, margin, difficulty=0.93, ignore_labels=[], distance_weight=0.5):
         super().__init__()
         self.margin = margin
         self.semi_hard = True
@@ -17,6 +17,7 @@ class TripletLoss(nn.Module):
         self.ignore_labels = ignore_labels
         self.average_triplet_loss = 0
         self.average_positive_dist = 0
+        self.distance_weight = distance_weight
 
     def _pairwise_distances(self, embeddings):
         dot_product = embeddings.mm(embeddings.transpose(0, 1))
@@ -137,7 +138,7 @@ class TripletLoss(nn.Module):
             0.9 + average_loss.item() * 0.1
         self.average_positive_dist = self.average_positive_dist * \
             0.9 + mean_positive_distance.item() * 0.1
-        return average_loss + 0.5 * mean_positive_distance
+        return average_loss + self.distance_weight * mean_positive_distance
 
     def increase_difficulty(self, step=0.1):
         self.difficulty += step
