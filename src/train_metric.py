@@ -27,7 +27,8 @@ def get_data_loaders(train_batch_size):
     if args.dataset == 'whale':
         test_data_transform = get_test_transform()
         train_data = OnlineMiningDataset(
-            'data', transform=get_train_transform(), min_size=args.min_size_per_class, exclude_new_whale=False)
+            'data', transform=get_train_transform(), min_size=args.min_size_per_class,
+            exclude_new_whale=True, batch_size=args.batch_size)
         source_data = CsvLabeledImageDataset(
             'data/train_with_id.csv', 'data/cropped/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
@@ -50,6 +51,7 @@ def get_data_loaders(train_batch_size):
 
     train_loader = DataLoader(train_data,
                               batch_size=train_batch_size, shuffle=False, drop_last=True, num_workers=args.num_workers)
+
     source_loader = DataLoader(
         source_data, batch_size=train_batch_size, shuffle=False, num_workers=args.num_workers)
     val_loader = DataLoader(

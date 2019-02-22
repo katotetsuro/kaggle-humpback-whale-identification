@@ -19,7 +19,7 @@ class OnlineMiningDataset(data.Dataset):
     train_with_id.csvの作り方はnotebooks/split_dataset.ipynbを参照
     """
 
-    def __init__(self, data_dir, transform=None, image_per_class=4, limit=None, min_size=1, exclude_new_whale=True):
+    def __init__(self, data_dir, transform=None, image_per_class=4, limit=None, min_size=1, exclude_new_whale=True, batch_size=128):
         df = pd.read_csv(join(data_dir, 'train_with_id.csv'))
         self.image_dir = join(data_dir, 'cropped/train')
 
@@ -43,6 +43,7 @@ class OnlineMiningDataset(data.Dataset):
             self.transform = torchvision.transforms.ToTensor()
 
         self.image_per_class = image_per_class
+        self.batch_size = batch_size
 
         self.sample()
 
@@ -78,6 +79,9 @@ class OnlineMiningDataset(data.Dataset):
                 d = self.df_without_new_whale[self.df_without_new_whale.label == l]
                 replace = len(d) < self.image_per_class
                 dfs.append(d.sample(self.image_per_class, replace=replace))
+                if ((len(dfs) + 1) * self.image_per_class) % self.batch_size == 0:
+                    dfs.append(self.df_new_whale.sample(
+                        self.image_per_class, replace=False))
 
         df = pd.concat(dfs)
         self.df = df.reset_index(drop=True)
