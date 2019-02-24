@@ -127,8 +127,11 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
     if args.optimizer == 'sgd':
         optimizer = SGD(model.parameters(), lr=lr, momentum=momentum,
                         weight_decay=args.weight_decay)
+
+        t_max = args.rotate_lr if args.rotate_lr > 0 else args.epochs
+        t_max *= len(train_loader.dataset) // args.batch_size
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, epochs)
+            optimizer, t_max)
     else:
         optimizer = Adam(model.parameters(), lr=lr,
                          weight_decay=args.weight_decay)
@@ -154,6 +157,9 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
 
+        if args.optimizer == 'sgd':
+            lr_scheduler.step()
+
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
 
@@ -177,14 +183,14 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             print('データセットをサンプルし直します')
             train_loader.dataset.sample()
 
-        if args.optimizer == 'sgd':
-            # learning rateのスケジューリングは、batch hard minigとresampleが意味なくなったら1/10する、とかで良さそう
-            lr_scheduler.step()
-            pass
-
         if engine.state.epoch == args.freeze_schedule:
             print('ベースモジュールをunfreezeします')
             model.unfreeze()
+
+        if args.optimizer == 'sgd':
+            if args.rotate_lr > 0 and engine.state.epoch % args.rotate_lr == 0:
+                print('lrを初期化します')
+                lr_scheduler.__init__(optimizer, lr_scheduler.T_max)
 
     # Setup model checkpoint:
     best_model_saver = ModelCheckpoint(log_dir,
@@ -269,6 +275,7 @@ if __name__ == "__main__":
     parser.add_argument('--gap', action='store_true')
     parser.add_argument('--distance-weight', default=0.5, type=float)
     parser.add_argument('--image-per-class', default=4, type=int)
+    parser.add_argument('--rotate-lr', default=0, type=int)
 
     args = parser.parse_args()
     print(args)
