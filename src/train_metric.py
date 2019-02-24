@@ -179,6 +179,8 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
                           loss_fn.average_positive_dist, engine.state.epoch)
         writer.add_scalar("training/learning_rate",
                           optimizer.param_groups[0]['lr'], engine.state.epoch)
+        writer.add_scalar("training/margin",
+                          loss_fn.margin, engine.state.epoch)
 
         if loss_fn.active_triplet_percent < 0.2 and loss_fn.average_triplet_loss < 0.05:
             loss_fn.increase_difficulty(step=0.005)
