@@ -27,8 +27,8 @@ def get_data_loaders(train_batch_size):
     if args.dataset == 'whale':
         test_data_transform = get_test_transform()
         train_data = OnlineMiningDataset(
-            'data', transform=get_train_transform(), min_size=args.min_size_per_class,
-            exclude_new_whale=True, batch_size=args.batch_size)
+            'data', transform=get_train_transform(), image_per_class=args.image_per_class, min_size=args.min_size_per_class,
+            exclude_new_whale=False, batch_size=args.batch_size)
         source_data = CsvLabeledImageDataset(
             'data/train_with_id.csv', 'data/cropped/train', transform=test_data_transform)
         val_data = CsvLabeledImageDataset(
@@ -268,6 +268,7 @@ if __name__ == "__main__":
     parser.add_argument('--normalize', action='store_true')
     parser.add_argument('--gap', action='store_true')
     parser.add_argument('--distance-weight', default=0.5, type=float)
+    parser.add_argument('--image-per-class', default=4, type=int)
 
     args = parser.parse_args()
     print(args)

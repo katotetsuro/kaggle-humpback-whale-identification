@@ -79,9 +79,9 @@ class OnlineMiningDataset(data.Dataset):
                 d = self.df_without_new_whale[self.df_without_new_whale.label == l]
                 replace = len(d) < self.image_per_class
                 dfs.append(d.sample(self.image_per_class, replace=replace))
-                if ((len(dfs) + 1) * self.image_per_class) % self.batch_size == 0:
-                    dfs.append(self.df_new_whale.sample(
-                        self.image_per_class, replace=False))
+                # if ((len(dfs) + 1) * self.image_per_class) % self.batch_size == 0:
+                #     dfs.append(self.df_new_whale.sample(
+                #         self.image_per_class, replace=False))
 
         df = pd.concat(dfs)
         self.df = df.reset_index(drop=True)
