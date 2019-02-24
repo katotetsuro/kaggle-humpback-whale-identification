@@ -157,6 +157,10 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             writer.add_scalar(
                 "training/loss", engine.state.output, engine.state.iteration)
 
+            if loss_fn.average_triplet_loss < 1e-2:
+                print('marginを増やします')
+                loss_fn.margin *= 1.05
+
         if args.optimizer == 'sgd':
             lr_scheduler.step()
 
