@@ -32,6 +32,8 @@ def run_one_epoch(model, data_loader, device='cpu'):
 
 
 class TripletAccuracy():
+    def __init__(self):
+        self.new_whale_threshold = 0.6
 
     def compute(self, model, source_loader, val_loader, top_k=5, device='cpu'):
         model.eval()
@@ -47,13 +49,21 @@ class TripletAccuracy():
             np.float32) * weights
         scores = np.max(scores, axis=1)
         mean_average_precision = np.mean(scores)
-        model.train()
 
         ids = []
-        for i in indexes:
+        known_whale_distances = distances[:, source_labels > 0]
+        known_whale_labels = source_labels[source_labels > 0]
+        indexes = indexes = np.argsort(known_whale_distances, axis=1)
+        for i, ds in zip(indexes, known_whale_distances):
             unique_labels = []
             for j in i:  # trainのj番目のサンプルを指す
-                l = source_labels[j]
+                d = ds[j]
+                if d > self.new_whale_threshold:
+                    if not 0 in unique_labels:
+                        unique_labels.append(0)
+                        if len(unique_labels) == 5:
+                            break
+                l = known_whale_labels[j]
                 if not l in unique_labels:
                     unique_labels.append(l)
 
@@ -70,6 +80,7 @@ class TripletAccuracy():
         scores_2 = np.max(scores_2, axis=1)
         unique_precision = np.mean(scores_2)
 
+        model.train()
         return mean_average_precision, unique_precision
 
 
