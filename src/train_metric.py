@@ -215,7 +215,7 @@ def run(train_batch_size, val_batch_size, epochs, lr, momentum, log_interval, lo
             acc_calculator = TripletAccuracy()
             accuracy, accuracy2 = acc_calculator.compute(
                 model, source_loader, val_loader, device=device)
-            best_model_saver._score_function = lambda engine: accuracy
+            best_model_saver._score_function = lambda engine: accuracy2
             best_model_saver(engine, {'metric': model})
 
             metrics = evaluator.state.metrics
